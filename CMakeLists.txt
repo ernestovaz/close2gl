@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.23)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(opengl-renderer)
-include_directories(${PROJECT_SOURCE_DIR}/include)
 
+include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.c)
 add_executable(opengl-renderer ${SOURCE_FILES})
 
