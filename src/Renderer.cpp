@@ -55,18 +55,16 @@ Renderer::Renderer(const char* windowProcessAddress, mat4 viewMatrix) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    this->vertexArrayID = vertexArrayID;
+
     this->fieldOfView = DEFAULT_FIELD_OF_VIEW;
     this->aspectRatio = DEFAULT_ASPECT_RATIO;
     this->nearPlane = DEFAULT_NEAR_PLANE;
     this->farPlane = DEFAULT_FAR_PLANE;
 
-    mat4 projection = perspective(radians(45.0f), aspectRatio, nearPlane, farPlane);
-
-    this->vertexArrayID = vertexArrayID;
-
     this->modelMatrix = mat4(1.0f);
     this->viewMatrix = viewMatrix;
-    this->projectionMatrix = projection;
+    updateProjectionMatrix();
 
     this->modelUniformID = glGetUniformLocation(shaderProgramID, "model");
     this->viewUniformID = glGetUniformLocation(shaderProgramID, "view");
@@ -78,14 +76,17 @@ Renderer::Renderer(const char* windowProcessAddress, mat4 viewMatrix) {
 
 }
 
-void Renderer::render(mat4 viewMatrix) {
+void Renderer::render(mat4 viewMatrix, int width, int height) {
+    if (width != this->screenWidth || height != this->screenHeight) {
+        this->aspectRatio = (float) width / (float) height;
+        glViewport(0, 0, width, height);
+        updateProjectionMatrix();
+    }
+
     glClearColor(0.43f, 0.89f, 0.78f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(shaderProgramID);
     glBindVertexArray(vertexArrayID);
-
-    count++;
-    this->viewMatrix = rotate(viewMatrix,radians((float)count),vec3(0.0, 1.0, 0.0));
 
     glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(modelMatrix));
     glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(viewMatrix));
@@ -149,4 +150,13 @@ unsigned int Renderer::createShaderProgram(
     linkShaderProgram(programID);
 
     return programID;
+}
+
+void Renderer::updateProjectionMatrix() {
+    projectionMatrix = perspective(
+            radians(fieldOfView), 
+            aspectRatio, 
+            nearPlane, 
+            farPlane
+    );
 }

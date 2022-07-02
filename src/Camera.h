@@ -6,6 +6,8 @@
 using glm::vec3;
 using glm::mat4;
 
+#define SENSITIVITY 0.05f
+
 class Camera {
 public:
     Camera();

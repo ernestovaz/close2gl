@@ -18,7 +18,11 @@ int main(void) {
         elapsedTime = window.getTimeSinceLastFrame();
         window.pollEvents();
         if (elapsedTime >= TIME_PER_FRAME) {
-            renderer.render(camera.getViewMatrix());
+            renderer.render(
+                    camera.getViewMatrix(), 
+                    window.width, 
+                    window.height
+            );
             window.swapBuffers();
         }
     }

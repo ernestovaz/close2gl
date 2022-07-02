@@ -4,6 +4,9 @@
 
 #include <GLFW/glfw3.h>
 
+#define DEFAULT_WIDTH 640
+#define DEFAULT_HEIGHT 480
+
 class Window {
 public:
     Window(Camera* camera);
@@ -14,13 +17,15 @@ public:
     double getTimeSinceLastFrame();
     const char* getProcessAddress();
 
+    static int width;
+    static int height;
+
     static void cursorPositionCallback(GLFWwindow*, double, double);
     static void mouseButtonCallback(GLFWwindow*, int, int , int);
+    static void windowSizeChangedCallback(GLFWwindow*, int, int);
 
 private:
     GLFWwindow* window;
-    int width;
-    int height;
 
     double lastFrameTime;
 

@@ -2,7 +2,11 @@
 #include <iostream>
 #include <cstdlib>
 
+int Window::width = DEFAULT_WIDTH;
+int Window::height = DEFAULT_HEIGHT;
+
 Camera* Window::camera;
+
 float Window::mouseXPosition;
 float Window::mouseYPosition;
 bool Window::hasMouseMoved = false;
@@ -16,9 +20,8 @@ Window::Window(Camera* camera) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    
 
-    window = glfwCreateWindow(1920, 1080, "HELLO WORLD", NULL, NULL);
+    window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "Render", NULL, NULL);
     if(!window) {
         glfwTerminate();
         exit(EXIT_FAILURE);
@@ -26,13 +29,9 @@ Window::Window(Camera* camera) {
 
     glfwMakeContextCurrent(window);
 
-
     glfwSetCursorPosCallback(window, Window::cursorPositionCallback);
     glfwSetMouseButtonCallback(window, Window::mouseButtonCallback);
-
-    glfwGetWindowSize(window, &width, &height);
-    this->mouseXPosition = width/2.0;
-    this->mouseYPosition = height/2.0;
+    glfwSetFramebufferSizeCallback(window, Window::windowSizeChangedCallback);
 
     this->camera = camera;
 }
@@ -88,5 +87,10 @@ void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int mode
             hasMouseMoved = false;
         }
     }
+}
+
+void Window::windowSizeChangedCallback(GLFWwindow* w, int width, int height) {
+    Window::width = width;
+    Window::height = height;
 }
 

@@ -15,7 +15,7 @@ using glm::normalize;
 using glm::radians;
 
 Camera::Camera() {
-    position  = vec3(0.0f, 0.0f,  1.0f);
+    position  = vec3(0.0f, 0.0f,  3.0f);
     direction = vec3(0.0f, 0.0f, -1.0f);
     up        = vec3(0.0f, 1.0f,  0.0f);
 
