@@ -13,9 +13,9 @@ public:
     void pollEvents();
     double getTimeSinceLastFrame();
     const char* getProcessAddress();
-    void updateCameraDirection(Camera* camera);
 
     static void cursorPositionCallback(GLFWwindow*, double, double);
+    static void mouseButtonCallback(GLFWwindow*, int, int , int);
 
 private:
     GLFWwindow* window;
@@ -25,7 +25,7 @@ private:
     double lastFrameTime;
 
     static bool hasMouseMoved;
-
+    static bool cameraIsBeingMoved;
     static float mouseXPosition;
     static float mouseYPosition;
     static Camera* camera;

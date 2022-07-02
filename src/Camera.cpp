@@ -19,7 +19,7 @@ Camera::Camera() {
     direction = vec3(0.0f, 0.0f, -1.0f);
     up        = vec3(0.0f, 1.0f,  0.0f);
 
-    yaw   = 0.0f;
+    yaw   = -90.0f;
     pitch = 0.0f;
 }
 
