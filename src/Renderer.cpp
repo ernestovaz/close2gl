@@ -78,7 +78,7 @@ Renderer::Renderer(const char* windowProcessAddress, mat4 viewMatrix) {
 
 }
 
-void Renderer::render() {
+void Renderer::render(mat4 viewMatrix) {
     glClearColor(0.43f, 0.89f, 0.78f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(shaderProgramID);

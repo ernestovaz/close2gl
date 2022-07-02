@@ -10,8 +10,11 @@ class Camera {
 public:
     Camera();
     mat4 getViewMatrix();
+    void updateDirection(double x, double y);
 private:
     vec3 position;
     vec3 direction;
     vec3 up;
+    float yaw;
+    float pitch;
 };

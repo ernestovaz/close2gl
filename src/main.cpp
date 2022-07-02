@@ -10,7 +10,7 @@
 
 int main(void) {
     Camera camera;
-    Window window;
+    Window window(&camera);
     Renderer renderer(window.getProcessAddress(), camera.getViewMatrix());
 
     double elapsedTime;
@@ -18,7 +18,7 @@ int main(void) {
         elapsedTime = window.getTimeSinceLastFrame();
         window.pollEvents();
         if (elapsedTime >= TIME_PER_FRAME) {
-            renderer.render();
+            renderer.render(camera.getViewMatrix());
             window.swapBuffers();
         }
     }
