@@ -31,7 +31,9 @@ Window::Window(Camera* camera) {
 
     glfwSetCursorPosCallback(window, Window::cursorPositionCallback);
     glfwSetMouseButtonCallback(window, Window::mouseButtonCallback);
+    glfwSetScrollCallback(window, Window::scrollCallback);
     glfwSetFramebufferSizeCallback(window, Window::windowSizeChangedCallback);
+    glfwSetKeyCallback(window, Window::keyCallback);
 
     this->camera = camera;
 }
@@ -85,6 +87,56 @@ void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int mode
             glfwSetInputMode(w, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             cameraIsBeingMoved = false;
             hasMouseMoved = false;
+        }
+    }
+}
+
+void Window::scrollCallback(GLFWwindow* w, double xOffset, double yOffset) {
+    camera->changeFOV(yOffset);
+}
+
+void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        switch(key){
+            case GLFW_KEY_W:
+                camera->moveFront();
+                break;
+            case GLFW_KEY_S:
+                camera->moveBack();
+                break;
+            case GLFW_KEY_A:
+                camera->moveLeft();
+                break;
+            case GLFW_KEY_D:
+                camera->moveRight();
+                break;
+            case GLFW_KEY_PAGE_UP:
+                camera->moveUp();
+                break;
+            case GLFW_KEY_PAGE_DOWN:
+                camera->moveDown();
+                break;
+            case GLFW_KEY_C:
+                camera->center();
+                break;
+            case GLFW_KEY_N:
+                camera->cycleNearPlane();
+                break;
+            case GLFW_KEY_F:
+                camera->cycleFarPlane();
+                break;
+            case GLFW_KEY_R:
+                camera->randomizeColor();
+                break;
+            case GLFW_KEY_P:
+                camera->cyclePrimitives();
+                break;
+            case GLFW_KEY_B:
+                camera->cycleCulling();
+                break;
+            case GLFW_KEY_O:
+                camera->cycleOrientation();
+                break;
         }
     }
 }

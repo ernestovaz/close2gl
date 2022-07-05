@@ -5,14 +5,12 @@
 #include <string>
 
 #include "Model.h"
+#include "Camera.h"
 
 using std::string;
 using glm::mat4;
 
-#define DEFAULT_FIELD_OF_VIEW 45
 #define DEFAULT_ASPECT_RATIO 1920.0f/1080.0f
-#define DEFAULT_NEAR_PLANE 0.001f
-#define DEFAULT_FAR_PLANE 200.0f
 
 #define VERTEX_SHADER_LOCATION "../shaders/vertex_shader.glsl"
 #define FRAGMENT_SHADER_LOCATION "../shaders/fragment_shader.glsl"
@@ -20,18 +18,17 @@ using glm::mat4;
 
 class Renderer {
 public:
-    Renderer(const char*, mat4);
+    Renderer(const char*, Camera*);
     void setModel(Model);
-    void render(mat4, int, int);
+    void render(int, int);
 
 private:
+    Camera* camera;
+
     float screenWidth;
     float screenHeight;
 
-    float fieldOfView;
     float aspectRatio;
-    float nearPlane;
-    float farPlane;
 
     int shaderProgramID;
     int vertexArrayID;
@@ -45,6 +42,7 @@ private:
     int modelUniformID;
     int viewUniformID;
     int projectionUniformID;
+    int colorUniformID;
 
     int count = 0;
 

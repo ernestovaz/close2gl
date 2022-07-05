@@ -17,9 +17,10 @@ int main(int argc, char **argv) {
 
     Camera camera;
     Window window(&camera);
-    Renderer renderer(window.getProcessAddress(), camera.getViewMatrix());
+    Renderer renderer(window.getProcessAddress(), &camera);
     Model model(modelFilePath);
     renderer.setModel(model);
+    camera.setFocus(model.getCenter(), model.getBoundingBoxSide());
 
     double elapsedTime;
     while (!window.shouldClose()) {
@@ -27,7 +28,6 @@ int main(int argc, char **argv) {
         window.pollEvents();
         if (elapsedTime >= TIME_PER_FRAME) {
             renderer.render(
-                    camera.getViewMatrix(), 
                     window.width, 
                     window.height
             );

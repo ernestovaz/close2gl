@@ -20,12 +20,12 @@ using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
 
-Renderer::Renderer(const char* windowProcessAddress, mat4 viewMatrix) {
+Renderer::Renderer(const char* windowProcessAddress, Camera* camera) {
     if(!gladLoadGLLoader((GLADloadproc)windowProcessAddress)) {
         cerr << "ERROR INITIALIZING GLAD" << endl;
         exit(EXIT_FAILURE);
     }
-
+    glEnable(GL_PROGRAM_POINT_SIZE);
     unsigned int vertexShaderID, fragmentShaderID;
     vertexShaderID = loadShader(VERTEX_SHADER_LOCATION, GL_VERTEX_SHADER);
     fragmentShaderID = loadShader(FRAGMENT_SHADER_LOCATION, GL_FRAGMENT_SHADER);
@@ -33,23 +33,22 @@ Renderer::Renderer(const char* windowProcessAddress, mat4 viewMatrix) {
     glDeleteShader(vertexShaderID);
     glDeleteShader(fragmentShaderID);
 
-    this->fieldOfView = DEFAULT_FIELD_OF_VIEW;
+    this->camera = camera;
     this->aspectRatio = DEFAULT_ASPECT_RATIO;
-    this->nearPlane = DEFAULT_NEAR_PLANE;
-    this->farPlane = DEFAULT_FAR_PLANE;
-
-    //TODO: implement camera translation and remove this line
-    this->modelMatrix = glm::rotate(mat4(1.0f), 3.1415f/2.0f, vec3(0.0f, 1.0f, 0.0f));
-    this->viewMatrix = viewMatrix;
+    
+    this->modelMatrix = mat4(1.0f);
+    this->viewMatrix = camera->getViewMatrix();
     updateProjectionMatrix();
 
     this->modelUniformID = glGetUniformLocation(shaderProgramID, "model");
     this->viewUniformID = glGetUniformLocation(shaderProgramID, "view");
     this->projectionUniformID = glGetUniformLocation(shaderProgramID, "projection");
+    this->colorUniformID = glGetUniformLocation(shaderProgramID, "color");
 
     glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(modelMatrix));
-    glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(viewMatrix));
+    glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(camera->getViewMatrix()));
     glUniformMatrix4fv(projectionUniformID,1,GL_FALSE, value_ptr(projectionMatrix));
+    glUniform3fv(colorUniformID, 1, value_ptr(camera->getColor()));
 
 }
 
@@ -101,11 +100,10 @@ void Renderer::setModel(Model model) {
     this->vertexArrayID = vertexArrayID;
 }
 
-void Renderer::render(mat4 viewMatrix, int width, int height) {
+void Renderer::render(int width, int height) {
     if (width != this->screenWidth || height != this->screenHeight) {
         this->aspectRatio = (float) width / (float) height;
         glViewport(0, 0, width, height);
-        updateProjectionMatrix();
     }
 
     glClearColor(0.43f, 0.89f, 0.78f, 1.0f);
@@ -113,9 +111,32 @@ void Renderer::render(mat4 viewMatrix, int width, int height) {
     glUseProgram(shaderProgramID);
     glBindVertexArray(vertexArrayID);
 
+
+    updateProjectionMatrix();
+    this->viewMatrix = camera->getViewMatrix();
     glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(modelMatrix));
     glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(viewMatrix));
     glUniformMatrix4fv(projectionUniformID,1,GL_FALSE, value_ptr(projectionMatrix));
+    glUniform3fv(colorUniformID, 1, value_ptr(camera->getColor()));
+
+    switch(camera->getPrimitive()){
+        case 1:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            break;
+        case 2:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            break;
+        case 3:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+            break;
+
+    }
+
+    if(camera->getCulling()) glEnable(GL_CULL_FACE);
+    else glDisable(GL_CULL_FACE);
+
+    if(camera->shouldReverseOrientation()) glFrontFace(GL_CCW);
+    else glFrontFace(GL_CW);
 
     glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_INT, (void*)0);
 
@@ -181,9 +202,9 @@ unsigned int Renderer::createShaderProgram(
 
 void Renderer::updateProjectionMatrix() {
     projectionMatrix = perspective(
-            radians(fieldOfView), 
+            radians(camera->getFOV()), 
             aspectRatio, 
-            nearPlane, 
-            farPlane
+            camera->getNearPlane(), 
+            camera->getFarPlane()
     );
 }

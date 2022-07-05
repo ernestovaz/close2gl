@@ -18,12 +18,17 @@ public:
     vector<vec3>         normals;
     vector<unsigned int> indices;
 
+    vec3 boundingBoxCenter;
+    float boundingBoxLargestSide;
+
     Model();
     Model(string);
-    void loadFromFile(string);
+    vec3 getCenter();
+    float getBoundingBoxSide();
 
 private:
-
+    void loadFromFile(string);
+    void calculateBoundingBox();
 
 };
 
