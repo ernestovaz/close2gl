@@ -6,8 +6,8 @@
 using glm::vec3;
 using glm::mat4;
 
-#define SENSITIVITY 0.01f
-#define MOVEMENT_SPEED 0.1f
+#define SENSITIVITY 50.0f
+#define MOVEMENT_SPEED 0.5f
 
 #define DEFAULT_FIELD_OF_VIEW 45
 #define DEFAULT_NEAR_PLANE 0.001f
@@ -25,7 +25,7 @@ public:
     bool getCulling();
     bool shouldReverseOrientation();
 
-    void updateDirection(double, double);
+    void updateDirection(float, float);
     void setFocus(vec3, float);
     void changeFOV(float);
     void moveFront();

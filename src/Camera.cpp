@@ -6,6 +6,8 @@
 
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 using std::max;
 using std::min;
@@ -13,6 +15,7 @@ using std::min;
 using glm::lookAt;
 using glm::normalize;
 using glm::cross;
+using glm::radians;
 
 Camera::Camera() {
     position  = vec3(0.0f, 0.0f,  0.0f);
@@ -68,9 +71,14 @@ bool Camera::shouldReverseOrientation() {
     return reverseOrientation;
 }
 
-void Camera::updateDirection(double x, double y) {
-    vec3 movement = vec3(x,y,cos(x)*sin(y));
-    if(!centerMode) direction += movement * SENSITIVITY;
+void Camera::updateDirection(float x, float y) {
+    if(!centerMode){
+        vec3 left = cross(direction, up);
+        vec3 newDirection = rotate(direction, radians(-y*SENSITIVITY), left);
+        if(angle(newDirection, up) > radians(5.0f) && angle(newDirection,-up) > radians(5.0f))
+            direction = newDirection;
+        direction = rotate(direction, radians(-x*SENSITIVITY), up);
+    }
 }
 
 void Camera::changeFOV(float offset) {
@@ -78,12 +86,10 @@ void Camera::changeFOV(float offset) {
 }
 
 void Camera::moveFront() {
-    if(centerMode) focus();
     position += direction * MOVEMENT_SPEED;
 }
 
 void Camera::moveBack() {
-    if(centerMode) focus();
     position -= direction * MOVEMENT_SPEED;
 }
 
@@ -91,12 +97,14 @@ void Camera::moveRight() {
     if(centerMode) focus();
     vec3 right = cross(-direction, up);
     position -= right * MOVEMENT_SPEED;
+    if(centerMode) focus();
 }
 
 void Camera::moveLeft() {
     if(centerMode) focus();
     vec3 left = cross(direction, up);
     position -= left * MOVEMENT_SPEED;
+    if(centerMode) focus();
 
 }
 
@@ -105,6 +113,7 @@ void Camera::moveUp() {
     vec3 right = cross(-direction, up);
     vec3 upFromCamera = cross(direction, right);
     position += upFromCamera * MOVEMENT_SPEED;
+    if(centerMode) focus();
 }
 
 void Camera::moveDown() {
@@ -112,7 +121,7 @@ void Camera::moveDown() {
     vec3 left = cross(direction, up);
     vec3 downFromCamera = cross(direction, left);
     position += downFromCamera * MOVEMENT_SPEED;
-
+    if(centerMode) focus();
 }
 
 void Camera::center() {

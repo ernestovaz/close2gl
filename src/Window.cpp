@@ -66,15 +66,16 @@ const char* Window::getProcessAddress() {
 void Window::cursorPositionCallback(GLFWwindow* w, double xPos, double yPos) {
     if(cameraIsBeingMoved) {
         if(!hasMouseMoved) {
+            glfwSetCursorPos(w, width/2.0f, height/2.0f);
+            hasMouseMoved = true;
+        } else {
+            float normalizedX = (xPos - width / 2.0f ) / width;
+            float normalizedY = (yPos - height / 2.0f ) / height;
+            camera->updateDirection(normalizedX, normalizedY);
+            glfwSetCursorPos(w, width/2.0f, height/2.0f);
             mouseXPosition = xPos;
             mouseYPosition = yPos;
-            hasMouseMoved = true;
         }
-        float xOffset = xPos - mouseXPosition;
-        float yOffset = mouseYPosition - yPos;
-        camera->updateDirection(xOffset, yOffset);
-        mouseXPosition = xPos;
-        mouseYPosition = yPos;
     }
 }
 
