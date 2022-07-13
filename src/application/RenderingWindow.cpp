@@ -1,19 +1,19 @@
-#include "Window.h"
+#include "RenderingWindow.h"
 #include <iostream>
 #include <cstdlib>
 
-int Window::width = DEFAULT_WIDTH;
-int Window::height = DEFAULT_HEIGHT;
+int RenderingWindow::width = DEFAULT_WIDTH;
+int RenderingWindow::height = DEFAULT_HEIGHT;
 
-Camera* Window::camera;
+Camera* RenderingWindow::camera;
 
-float Window::mouseXPosition;
-float Window::mouseYPosition;
-bool Window::hasMouseMoved = false;
-bool Window::cameraIsBeingMoved = false;
+float RenderingWindow::mouseXPosition;
+float RenderingWindow::mouseYPosition;
+bool RenderingWindow::hasMouseMoved = false;
+bool RenderingWindow::cameraIsBeingMoved = false;
 
 
-Window::Window(Camera* camera) {
+RenderingWindow::RenderingWindow(Camera* camera) {
     if(!glfwInit()) {
         exit(EXIT_FAILURE);
     }
@@ -29,41 +29,41 @@ Window::Window(Camera* camera) {
 
     glfwMakeContextCurrent(window);
 
-    glfwSetCursorPosCallback(window, Window::cursorPositionCallback);
-    glfwSetMouseButtonCallback(window, Window::mouseButtonCallback);
-    glfwSetScrollCallback(window, Window::scrollCallback);
-    glfwSetFramebufferSizeCallback(window, Window::windowSizeChangedCallback);
-    glfwSetKeyCallback(window, Window::keyCallback);
+    glfwSetCursorPosCallback(window, RenderingWindow::cursorPositionCallback);
+    glfwSetMouseButtonCallback(window, RenderingWindow::mouseButtonCallback);
+    glfwSetScrollCallback(window, RenderingWindow::scrollCallback);
+    glfwSetFramebufferSizeCallback(window, RenderingWindow::windowSizeChangedCallback);
+    glfwSetKeyCallback(window, RenderingWindow::keyCallback);
 
     this->camera = camera;
 }
 
-Window::~Window() {
+RenderingWindow::~RenderingWindow() {
     glfwTerminate();
 }
 
-bool Window::shouldClose() {
+bool RenderingWindow::shouldClose() {
     return glfwWindowShouldClose(window);
 }
 
-void Window::swapBuffers() {
+void RenderingWindow::swapBuffers() {
     lastFrameTime = glfwGetTime();
     glfwSwapBuffers(window);
 }
 
-void Window::pollEvents() {
+void RenderingWindow::pollEvents() {
     glfwPollEvents();
 }
 
-double Window::getTimeSinceLastFrame() {
+double RenderingWindow::getTimeSinceLastFrame() {
     return glfwGetTime() - lastFrameTime;
 }
 
-const char* Window::getProcessAddress() {
+const char* RenderingWindow::getProcessAddress() {
     return (const char*) glfwGetProcAddress;
 }
 
-void Window::cursorPositionCallback(GLFWwindow* w, double xPos, double yPos) {
+void RenderingWindow::cursorPositionCallback(GLFWwindow* w, double xPos, double yPos) {
     if(cameraIsBeingMoved) {
         if(!hasMouseMoved) {
             glfwSetCursorPos(w, width/2.0f, height/2.0f);
@@ -79,7 +79,7 @@ void Window::cursorPositionCallback(GLFWwindow* w, double xPos, double yPos) {
     }
 }
 
-void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int modes) {
+void RenderingWindow::mouseButtonCallback(GLFWwindow* w, int button, int action, int modes) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
             glfwSetInputMode(w, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -92,11 +92,11 @@ void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int mode
     }
 }
 
-void Window::scrollCallback(GLFWwindow* w, double xOffset, double yOffset) {
+void RenderingWindow::scrollCallback(GLFWwindow* w, double xOffset, double yOffset) {
     camera->changeFOV(yOffset);
 }
 
-void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mods) {
+void RenderingWindow::keyCallback(GLFWwindow*, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
         switch(key){
             case GLFW_KEY_W:
@@ -120,6 +120,9 @@ void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mod
             case GLFW_KEY_C:
                 camera->center();
                 break;
+            case GLFW_KEY_I:
+                camera->reset();
+                break;
             case GLFW_KEY_N:
                 camera->cycleNearPlane();
                 break;
@@ -142,8 +145,8 @@ void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mod
     }
 }
 
-void Window::windowSizeChangedCallback(GLFWwindow* w, int width, int height) {
-    Window::width = width;
-    Window::height = height;
+void RenderingWindow::windowSizeChangedCallback(GLFWwindow* w, int width, int height) {
+    RenderingWindow::width = width;
+    RenderingWindow::height = height;
 }
 

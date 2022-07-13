@@ -1,9 +1,11 @@
 #include <iostream>
+#include <thread>
 
-#include "Renderer.h"
-#include "Window.h"
-#include "Camera.h"
-#include "Model.h"
+#include "renderer/Renderer.h"
+#include "renderer/Camera.h"
+#include "renderer/Model.h"
+#include "application/RenderingWindow.h"
+#include "application/UserInterface.h"
 
 #define TARGET_FRAME_RATE 60
 #define TIME_PER_FRAME 1.0/TARGET_FRAME_RATE
@@ -15,8 +17,10 @@ int main(int argc, char **argv) {
     const char* modelFilePath = argc == 2 ? 
         argv[1] : FALLBACK_MODEL_PATH;
 
+    UserInterface userInterface;
+
     Camera camera;
-    Window window(&camera);
+    RenderingWindow window(&camera);
     Renderer renderer(window.getProcessAddress(), &camera);
     Model model(modelFilePath);
     renderer.setModel(model);

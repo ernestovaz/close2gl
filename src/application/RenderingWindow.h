@@ -1,16 +1,17 @@
 #pragma once
 
-#include "Camera.h"
+#include "../renderer/Camera.h"
 
 #include <GLFW/glfw3.h>
 
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
 
-class Window {
+class RenderingWindow {
 public:
-    Window(Camera* camera);
-    ~Window();
+    RenderingWindow(Camera* camera);
+    ~RenderingWindow();
+
     bool shouldClose();
     void swapBuffers();
     void pollEvents();
