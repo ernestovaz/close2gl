@@ -1,16 +1,17 @@
 #pragma once
 
 #include "../renderer/Camera.h"
+#include "SettingsToolbox.h"
 
 #include <GLFW/glfw3.h>
 
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
 
-class RenderingWindow {
+class Window {
 public:
-    RenderingWindow(Camera* camera);
-    ~RenderingWindow();
+    Window(Camera* camera);
+    ~Window();
 
     bool shouldClose();
     void swapBuffers();
@@ -29,6 +30,7 @@ public:
 
 private:
     GLFWwindow* window;
+    SettingsToolbox* settingsToolbox;
 
     double lastFrameTime;
 
