@@ -9,21 +9,13 @@ using glm::mat4;
 #define SENSITIVITY 50.0f
 #define MOVEMENT_SPEED 0.5f
 
-#define DEFAULT_FIELD_OF_VIEW 45
-#define DEFAULT_NEAR_PLANE 0.001f
-#define DEFAULT_FAR_PLANE 200.0f
-
 class Camera {
 public:
     Camera();
-    mat4 getViewMatrix();
-    vec3 getColor();
-    float getFOV();
-    float getNearPlane();
-    float getFarPlane();
-    int getPrimitive();
-    bool getCulling();
-    bool shouldReverseOrientation();
+
+    static vec3 position;
+    static vec3 direction;
+    static vec3 up;
 
     void updateDirection(float, float);
     void setFocus(vec3, float);
@@ -37,31 +29,9 @@ public:
     void center();
     void reset();
     void focus();
-    void cycleNearPlane();
-    void cycleFarPlane();
-    void cyclePrimitives();
-    void cycleCulling();
-    void cycleOrientation();
-    void randomizeColor();
 
 private:
-    vec3 position;
-    vec3 direction;
-    vec3 up;
-
-    float fieldOfView;
-    float nearPlane;
-    float farPlane;
-
+    bool shouldFocusCenter;
     vec3 focusPoint;
-    bool centerMode = false;
-    bool reverseOrientation = false;
     vec3 firstPosition;
-
-    vec3 color;
-
-    int primitive;
-
-    bool culling;
-
 };

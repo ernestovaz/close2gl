@@ -5,9 +5,13 @@
 #include <sstream>
 #include <cstdlib>
 
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "Settings.h"
+#include "../application/Window.h"
 
 using std::cerr;
 using std::exit;
@@ -20,7 +24,7 @@ using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
 
-Renderer::Renderer(const char* windowProcessAddress, Camera* camera) {
+Renderer::Renderer(const char* windowProcessAddress) {
     if(!gladLoadGLLoader((GLADloadproc)windowProcessAddress)) {
         cerr << "ERROR INITIALIZING GLAD" << endl;
         exit(EXIT_FAILURE);
@@ -33,22 +37,15 @@ Renderer::Renderer(const char* windowProcessAddress, Camera* camera) {
     glDeleteShader(vertexShaderID);
     glDeleteShader(fragmentShaderID);
 
-    this->camera = camera;
-    this->aspectRatio = DEFAULT_ASPECT_RATIO;
-    
-    this->modelMatrix = mat4(1.0f);
-    this->viewMatrix = camera->getViewMatrix();
-    updateProjectionMatrix();
-
     this->modelUniformID = glGetUniformLocation(shaderProgramID, "model");
     this->viewUniformID = glGetUniformLocation(shaderProgramID, "view");
     this->projectionUniformID = glGetUniformLocation(shaderProgramID, "projection");
     this->colorUniformID = glGetUniformLocation(shaderProgramID, "color");
 
-    glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(modelMatrix));
-    glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(camera->getViewMatrix()));
-    glUniformMatrix4fv(projectionUniformID,1,GL_FALSE, value_ptr(projectionMatrix));
-    glUniform3fv(colorUniformID, 1, value_ptr(camera->getColor()));
+    updateProjectionMatrix();
+    updateViewMatrix();
+
+    glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(mat4(1.0f)));
 
 }
 
@@ -100,42 +97,33 @@ void Renderer::setModel(Model model) {
     this->vertexArrayID = vertexArrayID;
 }
 
-void Renderer::render(int width, int height) {
-    if (width != this->screenWidth || height != this->screenHeight) {
-        this->aspectRatio = (float) width / (float) height;
-        glViewport(0, 0, width, height);
-    }
-
+void Renderer::render() {
     glClearColor(0.43f, 0.89f, 0.78f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(shaderProgramID);
     glBindVertexArray(vertexArrayID);
 
+    checkAndUpdateViewMatrix();
+    checkAndUpdateProjectionMatrix();
+    glUniform3fv(colorUniformID, 1, value_ptr(Settings::renderingColor));
 
-    updateProjectionMatrix();
-    this->viewMatrix = camera->getViewMatrix();
-    glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(modelMatrix));
-    glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(viewMatrix));
-    glUniformMatrix4fv(projectionUniformID,1,GL_FALSE, value_ptr(projectionMatrix));
-    glUniform3fv(colorUniformID, 1, value_ptr(camera->getColor()));
-
-    switch(camera->getPrimitive()){
-        case 1:
+    switch(Settings::renderingPrimitive){
+        case RenderingPrimitive::TRIANGLES:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             break;
-        case 2:
+        case RenderingPrimitive::LINES:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             break;
-        case 3:
+        case RenderingPrimitive::POINTS:
             glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
             break;
 
     }
 
-    if(camera->getCulling()) glEnable(GL_CULL_FACE);
+    if(Settings::cullingEnabled) glEnable(GL_CULL_FACE);
     else glDisable(GL_CULL_FACE);
 
-    if(camera->shouldReverseOrientation()) glFrontFace(GL_CCW);
+    if(Settings::reverseFaceOrientation) glFrontFace(GL_CCW);
     else glFrontFace(GL_CW);
 
     glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_INT, (void*)0);
@@ -196,15 +184,44 @@ unsigned int Renderer::createShaderProgram(
     glAttachShader(programID, vertexShaderID);
     glAttachShader(programID, fragmentShaderID);
     linkShaderProgram(programID);
+    glUseProgram(programID);
 
     return programID;
 }
 
+void Renderer::checkAndUpdateProjectionMatrix() {
+    if (Window::width != this->lastScreenWidth 
+        || Window::height != this->lastScreenHeight) {
+        glViewport(0, 0, Window::width, Window::height);
+        updateProjectionMatrix();
+    }
+}
+
+void Renderer::checkAndUpdateViewMatrix() {
+    if (Camera::position != lastCameraPosition
+        || Camera::direction != lastCameraDirection) {
+        updateViewMatrix();
+        lastCameraPosition = Camera::position;
+        lastCameraDirection = Camera::direction;
+    }
+}
+
 void Renderer::updateProjectionMatrix() {
-    projectionMatrix = perspective(
-            radians(camera->getFOV()), 
+    float aspectRatio = (float) Window::width / (float) Window::height;
+    mat4 projectionMatrix = perspective(
+            radians(Settings::fieldOfView), 
             aspectRatio, 
-            camera->getNearPlane(), 
-            camera->getFarPlane()
+            Settings::nearPlane, 
+            Settings::farPlane
     );
+    glUniformMatrix4fv(projectionUniformID,1,GL_FALSE, value_ptr(projectionMatrix));
+}
+
+void Renderer::updateViewMatrix() {
+    mat4 viewMatrix = lookAt(
+            Camera::position, 
+            Camera::position+Camera::direction, 
+            Camera::up
+    );
+    glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(viewMatrix));
 }

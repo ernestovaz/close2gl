@@ -12,16 +12,9 @@ find_package(glfw3 3.3 REQUIRED)
 find_package(OpenGL REQUIRED COMPONENTS OpenGL)
 find_package(assimp REQUIRED)
 
-find_package(PkgConfig)
-pkg_check_modules(GTKMM gtkmm-4.0)
-
 add_dependencies(opengl-renderer OpenGL::OpenGL)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-
-link_directories(${GTKMM_LIBRARY_DIRS})
-include_directories(${GTKMM_INCLUDE_DIRS})
-target_link_libraries(opengl-renderer ${GTKMM_LIBRARIES})
 
 target_link_libraries(opengl-renderer glfw)
 target_link_libraries(opengl-renderer OpenGL::OpenGL)

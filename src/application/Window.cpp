@@ -12,6 +12,8 @@ float Window::mouseYPosition;
 bool Window::hasMouseMoved = false;
 bool Window::cameraIsBeingMoved = false;
 
+SettingsToolbox* Window::settingsToolbox;
+
 
 Window::Window(Camera* camera) {
     if(!glfwInit()) {
@@ -29,15 +31,13 @@ Window::Window(Camera* camera) {
 
     glfwMakeContextCurrent(window);
 
+    glfwSwapInterval(0);
     glfwSetCursorPosCallback(window, Window::cursorPositionCallback);
     glfwSetMouseButtonCallback(window, Window::mouseButtonCallback);
-    glfwSetScrollCallback(window, Window::scrollCallback);
     glfwSetFramebufferSizeCallback(window, Window::windowSizeChangedCallback);
-    glfwSetKeyCallback(window, Window::keyCallback);
 
     this->camera = camera;
-
-    this->settingsToolbox = new SettingsToolbox(window);
+    this->settingsToolbox = new SettingsToolbox(window, camera);
 }
 
 Window::~Window() {
@@ -45,7 +45,8 @@ Window::~Window() {
 }
 
 bool Window::shouldClose() {
-    return glfwWindowShouldClose(window);
+    return glfwWindowShouldClose(window)
+        || settingsToolbox->quitButtonClicked;
 }
 
 void Window::swapBuffers() {
@@ -83,7 +84,7 @@ void Window::cursorPositionCallback(GLFWwindow* w, double xPos, double yPos) {
 }
 
 void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int modes) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (!settingsToolbox->isHandlingMouse() && button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
             glfwSetInputMode(w, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             cameraIsBeingMoved = true;
@@ -95,6 +96,7 @@ void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int mode
     }
 }
 
+/*
 void Window::scrollCallback(GLFWwindow* w, double xOffset, double yOffset) {
     camera->changeFOV(yOffset);
 }
@@ -147,6 +149,7 @@ void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mod
         }
     }
 }
+*/
 
 void Window::windowSizeChangedCallback(GLFWwindow* w, int width, int height) {
     Window::width = width;

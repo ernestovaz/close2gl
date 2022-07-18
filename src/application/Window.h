@@ -24,16 +24,14 @@ public:
 
     static void cursorPositionCallback(GLFWwindow*, double, double);
     static void mouseButtonCallback(GLFWwindow*, int, int , int);
-    static void scrollCallback(GLFWwindow* window, double, double);
-    static void keyCallback(GLFWwindow*, int, int, int, int);
     static void windowSizeChangedCallback(GLFWwindow*, int, int);
 
 private:
     GLFWwindow* window;
-    SettingsToolbox* settingsToolbox;
 
     double lastFrameTime;
 
+    static SettingsToolbox* settingsToolbox;
     static bool hasMouseMoved;
     static bool cameraIsBeingMoved;
     static float mouseXPosition;
