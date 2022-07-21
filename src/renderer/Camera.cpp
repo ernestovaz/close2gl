@@ -23,6 +23,7 @@ Camera::Camera() {
     position  = vec3(0.0f, 0.0f,  0.0f);
     direction = vec3(0.0f, 0.0f, -1.0f);
     up        = vec3(0.0f, 1.0f,  0.0f);
+    movementUnits = DEFAULT_MOVEMENT_UNITS;
 }
 
 void Camera::setFocus(vec3 focus, float boundingBoxSide) {
@@ -48,24 +49,24 @@ void Camera::updateDirection(float x, float y) {
 }
 
 void Camera::moveFront() {
-    position += direction * MOVEMENT_SPEED;
+    position += direction * movementUnits;
 }
 
 void Camera::moveBack() {
-    position -= direction * MOVEMENT_SPEED;
+    position -= direction * movementUnits;
 }
 
 void Camera::moveRight() {
     if(shouldFocusCenter) focus();
     vec3 right = cross(-direction, up);
-    position -= right * MOVEMENT_SPEED;
+    position -= right * movementUnits;
     if(shouldFocusCenter) focus();
 }
 
 void Camera::moveLeft() {
     if(shouldFocusCenter) focus();
     vec3 left = cross(direction, up);
-    position -= left * MOVEMENT_SPEED;
+    position -= left * movementUnits;
     if(shouldFocusCenter) focus();
 
 }
@@ -74,7 +75,7 @@ void Camera::moveUp() {
     if(shouldFocusCenter) focus();
     vec3 right = cross(-direction, up);
     vec3 upFromCamera = cross(direction, right);
-    position += upFromCamera * MOVEMENT_SPEED;
+    position += upFromCamera * movementUnits;
     if(shouldFocusCenter) focus();
 }
 
@@ -82,7 +83,7 @@ void Camera::moveDown() {
     if(shouldFocusCenter) focus();
     vec3 left = cross(direction, up);
     vec3 downFromCamera = cross(direction, left);
-    position += downFromCamera * MOVEMENT_SPEED;
+    position += downFromCamera * movementUnits;
     if(shouldFocusCenter) focus();
 }
 

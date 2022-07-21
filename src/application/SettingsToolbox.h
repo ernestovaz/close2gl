@@ -11,4 +11,7 @@ public:
     void render();
     bool isHandlingMouse();
     bool quitButtonClicked = false;
+private:
+    Camera* camera;
+    void renderPrimitivesMenu();
 };

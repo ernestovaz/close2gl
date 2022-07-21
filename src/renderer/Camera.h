@@ -7,11 +7,13 @@ using glm::vec3;
 using glm::mat4;
 
 #define SENSITIVITY 50.0f
-#define MOVEMENT_SPEED 0.5f
+#define DEFAULT_MOVEMENT_UNITS 0.5f
 
 class Camera {
 public:
     Camera();
+
+    float movementUnits;
 
     static vec3 position;
     static vec3 direction;
