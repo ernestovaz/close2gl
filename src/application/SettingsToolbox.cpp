@@ -1,8 +1,9 @@
 #include "SettingsToolbox.h"
 
-#include "../renderer/Settings.h"
-
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+
+#include "../renderer/Settings.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"

@@ -10,6 +10,7 @@ Camera* Window::camera;
 float Window::mouseXPosition;
 float Window::mouseYPosition;
 bool Window::hasMouseMoved = false;
+bool Window::exitKeyWasPressed = false;
 bool Window::cameraIsBeingMoved = false;
 
 SettingsToolbox* Window::settingsToolbox;
@@ -35,6 +36,7 @@ Window::Window(Camera* camera) {
     glfwSetCursorPosCallback(window, Window::cursorPositionCallback);
     glfwSetMouseButtonCallback(window, Window::mouseButtonCallback);
     glfwSetFramebufferSizeCallback(window, Window::windowSizeChangedCallback);
+    glfwSetKeyCallback(window, Window::keyCallback);
 
     this->camera = camera;
     this->settingsToolbox = new SettingsToolbox(window, camera);
@@ -46,7 +48,8 @@ Window::~Window() {
 
 bool Window::shouldClose() {
     return glfwWindowShouldClose(window)
-        || settingsToolbox->quitButtonClicked;
+        || settingsToolbox->quitButtonClicked
+        || exitKeyWasPressed;
 }
 
 void Window::swapBuffers() {
@@ -96,10 +99,6 @@ void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int mode
     }
 }
 
-/*
-void Window::scrollCallback(GLFWwindow* w, double xOffset, double yOffset) {
-    camera->changeFOV(yOffset);
-}
 
 void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
@@ -122,34 +121,13 @@ void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mod
             case GLFW_KEY_PAGE_DOWN:
                 camera->moveDown();
                 break;
-            case GLFW_KEY_C:
-                camera->center();
-                break;
-            case GLFW_KEY_I:
-                camera->reset();
-                break;
-            case GLFW_KEY_N:
-                camera->cycleNearPlane();
-                break;
-            case GLFW_KEY_F:
-                camera->cycleFarPlane();
-                break;
-            case GLFW_KEY_R:
-                camera->randomizeColor();
-                break;
-            case GLFW_KEY_P:
-                camera->cyclePrimitives();
-                break;
-            case GLFW_KEY_B:
-                camera->cycleCulling();
-                break;
-            case GLFW_KEY_O:
-                camera->cycleOrientation();
+            case GLFW_KEY_ESCAPE:
+                exitKeyWasPressed = true;
                 break;
         }
     }
 }
-*/
+
 
 void Window::windowSizeChangedCallback(GLFWwindow* w, int width, int height) {
     Window::width = width;

@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     Model model(modelFilePath);
 
     Camera camera;
-    camera.setFocus(model.getCenter(), model.getBoundingBoxSide());
+    camera.setFocusPoint(model.getCenter(), model.getBoundingBoxSide());
     Window window(&camera);
 
     Renderer renderer(window.getProcessAddress());

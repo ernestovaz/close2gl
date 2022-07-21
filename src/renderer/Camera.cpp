@@ -15,9 +15,15 @@ using glm::normalize;
 using glm::cross;
 using glm::radians;
 
+float Camera::movementUnits;
+
 vec3 Camera::position; 
 vec3 Camera::direction; 
 vec3 Camera::up; 
+
+vec3 Camera::focusPoint; 
+vec3 Camera::firstPosition; 
+bool Camera::shouldFocusCenter = false;
 
 Camera::Camera() {
     position  = vec3(0.0f, 0.0f,  0.0f);
@@ -26,11 +32,11 @@ Camera::Camera() {
     movementUnits = DEFAULT_MOVEMENT_UNITS;
 }
 
-void Camera::setFocus(vec3 focus, float boundingBoxSide) {
-    this->focusPoint = focus;
-    this->position.z = (boundingBoxSide/2)/tan(Settings::fieldOfView/2.0);
-    this->firstPosition = position;
-    this->focus();
+void Camera::setFocusPoint(vec3 focusPoint, float boundingBoxSide) {
+    Camera::focusPoint = focusPoint;
+    position.z = (boundingBoxSide/2)/tan(Settings::fieldOfView/2.0);
+    firstPosition = position;
+    focus();
 }
 
 void Camera::updateDirection(float x, float y) {

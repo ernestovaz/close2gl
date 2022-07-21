@@ -25,7 +25,7 @@ public:
     static void cursorPositionCallback(GLFWwindow*, double, double);
     static void mouseButtonCallback(GLFWwindow*, int, int , int);
     static void windowSizeChangedCallback(GLFWwindow*, int, int);
-
+    static void keyCallback(GLFWwindow*, int, int, int, int); 
 private:
     GLFWwindow* window;
 
@@ -33,9 +33,11 @@ private:
 
     static SettingsToolbox* settingsToolbox;
     static bool hasMouseMoved;
+    static bool exitKeyWasPressed;
     static bool cameraIsBeingMoved;
     static float mouseXPosition;
     static float mouseYPosition;
     static Camera* camera;
+
 
 };
