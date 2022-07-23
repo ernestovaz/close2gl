@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../renderer/Camera.h"
 #include "SettingsToolbox.h"
 
 #include <GLFW/glfw3.h>
@@ -10,14 +9,14 @@
 
 class Window {
 public:
-    Window(Camera* camera);
+    Window();
     ~Window();
 
     bool shouldClose();
     void swapBuffers();
     void pollEvents();
     double getTimeSinceLastFrame();
-    const char* getProcessAddress();
+    static const char* getProcessAddress();
 
     static int width;
     static int height;
@@ -27,7 +26,7 @@ public:
     static void windowSizeChangedCallback(GLFWwindow*, int, int);
     static void keyCallback(GLFWwindow*, int, int, int, int); 
 private:
-    GLFWwindow* window;
+    static GLFWwindow* window;
 
     double lastFrameTime;
 
@@ -37,7 +36,6 @@ private:
     static bool cameraIsBeingMoved;
     static float mouseXPosition;
     static float mouseYPosition;
-    static Camera* camera;
 
 
 };

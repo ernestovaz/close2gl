@@ -6,12 +6,11 @@
 
 class SettingsToolbox {
 public:
-    SettingsToolbox(GLFWwindow*, Camera*);
+    SettingsToolbox(GLFWwindow*);
     ~SettingsToolbox();
     void render();
     bool isHandlingMouse();
     bool quitButtonClicked = false;
 private:
-    Camera* camera;
     void renderPrimitivesMenu();
 };

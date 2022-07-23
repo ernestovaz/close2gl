@@ -4,23 +4,19 @@
 #include <string>
 
 #include "Model.h"
-#include "Camera.h"
 
 using std::string;
-using glm::mat4;
 
 #define VERTEX_SHADER_LOCATION "../shaders/vertex_shader.glsl"
 #define FRAGMENT_SHADER_LOCATION "../shaders/fragment_shader.glsl"
 
 class Renderer {
 public:
-    Renderer(const char*);
+    Renderer();
     void setModel(Model);
     void render();
 
 private:
-    Camera* camera;
-
     int shaderProgramID;
     int vertexArrayID;
 

@@ -1,11 +1,14 @@
 #include "Window.h"
+
 #include <iostream>
 #include <cstdlib>
 
+#include "../renderer/Camera.h"
+
+GLFWwindow* Window::window;
+
 int Window::width = DEFAULT_WIDTH;
 int Window::height = DEFAULT_HEIGHT;
-
-Camera* Window::camera;
 
 float Window::mouseXPosition;
 float Window::mouseYPosition;
@@ -16,7 +19,7 @@ bool Window::cameraIsBeingMoved = false;
 SettingsToolbox* Window::settingsToolbox;
 
 
-Window::Window(Camera* camera) {
+Window::Window() {
     if(!glfwInit()) {
         exit(EXIT_FAILURE);
     }
@@ -38,8 +41,7 @@ Window::Window(Camera* camera) {
     glfwSetFramebufferSizeCallback(window, Window::windowSizeChangedCallback);
     glfwSetKeyCallback(window, Window::keyCallback);
 
-    this->camera = camera;
-    this->settingsToolbox = new SettingsToolbox(window, camera);
+    this->settingsToolbox = new SettingsToolbox(window);
 }
 
 Window::~Window() {
@@ -78,7 +80,7 @@ void Window::cursorPositionCallback(GLFWwindow* w, double xPos, double yPos) {
         } else {
             float normalizedX = (xPos - width / 2.0f ) / width;
             float normalizedY = (yPos - height / 2.0f ) / height;
-            camera->updateDirection(normalizedX, normalizedY);
+            Camera::updateDirection(normalizedX, normalizedY);
             glfwSetCursorPos(w, width/2.0f, height/2.0f);
             mouseXPosition = xPos;
             mouseYPosition = yPos;
@@ -104,22 +106,22 @@ void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mod
     if (action == GLFW_PRESS) {
         switch(key){
             case GLFW_KEY_W:
-                camera->moveFront();
+                Camera::moveFront();
                 break;
             case GLFW_KEY_S:
-                camera->moveBack();
+                Camera::moveBack();
                 break;
             case GLFW_KEY_A:
-                camera->moveLeft();
+                Camera::moveLeft();
                 break;
             case GLFW_KEY_D:
-                camera->moveRight();
+                Camera::moveRight();
                 break;
             case GLFW_KEY_PAGE_UP:
-                camera->moveUp();
+                Camera::moveUp();
                 break;
             case GLFW_KEY_PAGE_DOWN:
-                camera->moveDown();
+                Camera::moveDown();
                 break;
             case GLFW_KEY_ESCAPE:
                 exitKeyWasPressed = true;

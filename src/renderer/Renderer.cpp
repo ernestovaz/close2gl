@@ -19,13 +19,14 @@ using std::endl;
 using std::ifstream;
 using std::ostringstream;
 
+using glm::mat4;
 using glm::perspective;
 using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
 
-Renderer::Renderer(const char* windowProcessAddress) {
-    if(!gladLoadGLLoader((GLADloadproc)windowProcessAddress)) {
+Renderer::Renderer() {
+    if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
         cerr << "ERROR INITIALIZING GLAD" << endl;
         exit(EXIT_FAILURE);
     }

@@ -9,7 +9,10 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-SettingsToolbox::SettingsToolbox(GLFWwindow* window, Camera* camera) {
+#include "../renderer/Camera.h"
+
+
+SettingsToolbox::SettingsToolbox(GLFWwindow* window) {
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
@@ -22,7 +25,6 @@ SettingsToolbox::SettingsToolbox(GLFWwindow* window, Camera* camera) {
     ImVec4 primaryColor = ImVec4(0.40, 0.26, 0.47, 1.0);
     ImVec4 secondaryColor = ImVec4(0.25, 0.21, 0.34, 1.0);
     ImVec4* colors = ImGui::GetStyle().Colors;
-
 
     colors[ImGuiCol_WindowBg]               = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
     colors[ImGuiCol_FrameBg]                = ImVec4(0.43f, 0.42f, 0.47f, 0.54f);
@@ -39,8 +41,6 @@ SettingsToolbox::SettingsToolbox(GLFWwindow* window, Camera* camera) {
     colors[ImGuiCol_HeaderHovered]          = ImVec4(0.47f, 0.27f, 0.52f, 1.00f);
     colors[ImGuiCol_Button]                 = ImVec4(0.62f, 0.26f, 0.71f, 0.40f);
     colors[ImGuiCol_ButtonActive]           = ImVec4(0.50f, 0.31f, 0.50f, 1.00f);
-
-    this->camera = camera;
 
     ImGui::SetNextWindowCollapsed(true);
 }
@@ -88,38 +88,36 @@ void SettingsToolbox::render() {
         ImGui::PushItemWidth(150);
         ImGui::SliderFloat("Field Of View", &Settings::fieldOfView, 10.0f, 89.0f);
 
-        if(ImGui::ArrowButton("left", 0)) camera->moveLeft();
+        if(ImGui::ArrowButton("left", 0)) Camera::moveLeft();
         ImGui::SameLine();
-        if(ImGui::ArrowButton("front", 2)) camera->moveFront();
+        if(ImGui::ArrowButton("front", 2)) Camera::moveFront();
         ImGui::SameLine();
-        if(ImGui::ArrowButton("back", 3)) camera->moveBack();
+        if(ImGui::ArrowButton("back", 3)) Camera::moveBack();
         ImGui::SameLine();
-        if(ImGui::ArrowButton("right", 1)) camera->moveRight();
+        if(ImGui::ArrowButton("right", 1)) Camera::moveRight();
         ImGui::SameLine();
-        if(ImGui::Button("Up")) camera->moveUp();
+        if(ImGui::Button("Up")) Camera::moveUp();
         ImGui::SameLine();
-        if(ImGui::Button("Down")) camera->moveDown();
+        if(ImGui::Button("Down")) Camera::moveDown();
         ImGui::SameLine();
         ImGui::Text("Move Camera");
 
         ImGui::PushItemWidth(100);
-        ImGui::InputFloat("Movement Units", &camera->movementUnits, 0.5);
+        ImGui::InputFloat("Movement Units", &Camera::movementUnits, 0.5);
 
         static bool cameraIsCentered = false;
         if(ImGui::Checkbox("Center Camera", &cameraIsCentered)) {
-            camera->center();
+            Camera::center();
         }
         if(ImGui::Button("Reset Camera Position")) {
-            camera->reset();
+            Camera::reset();
         }
 
         ImGui::Unindent(10.0f);
     }
-
     if (ImGui::Button("Quit")) quitButtonClicked = true;
 
     ImGui::End();
-
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
