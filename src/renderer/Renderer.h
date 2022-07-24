@@ -4,11 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "ShadingMode.h"
+#include "ShadingMethod.h"
 #include "Model.h"
 
 using std::string;
-using std::vector;
 
 #define VERTEX_SHADER_LOCATION "../shaders/vertex_shader.glsl"
 #define FRAGMENT_SHADER_LOCATION "../shaders/fragment_shader.glsl"
@@ -20,8 +19,7 @@ public:
     void setModel(Model);
     void render();
 
-    static void setShadingMode(ShadingMode);
-    static vector<ShadingMode> shadingModes;
+    static void setShadingMethod(ShadingMethod);
 
 private:
     unsigned int shaderProgramID;
@@ -39,7 +37,7 @@ private:
     unsigned int createShaderProgram(unsigned int, unsigned int);
     void linkShaderProgram(unsigned int);
 
-    void initializeShadingFunctions();
+    void initializeShadingSubroutines();
 
     void initializeModelMatrix();
     void updateProjectionMatrix();

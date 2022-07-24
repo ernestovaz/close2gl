@@ -25,10 +25,6 @@ using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
 
-vector<ShadingMode> Renderer::shadingModes{
-    ShadingMode("no_shading")
-};
-
 Renderer::Renderer() {
     if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
         cerr << "ERROR INITIALIZING GLAD" << endl;
@@ -52,8 +48,8 @@ Renderer::Renderer() {
     updateProjectionMatrix();
     updateViewMatrix();
 
-    initializeShadingFunctions();
-    setShadingMode(shadingModes[0]);
+    initializeShadingSubroutines();
+    setShadingMethod(ShadingMethod::methods[0]);
 }
 
 void Renderer::setModel(Model model) {
@@ -196,12 +192,17 @@ unsigned int Renderer::createShaderProgram(
     return programID;
 }
 
-void Renderer::initializeShadingFunctions() {
-    for (ShadingMode mode : shadingModes) {
-        mode.uniformID = glGetSubroutineIndex(
+void Renderer::initializeShadingSubroutines() {
+    for (ShadingMethod method : ShadingMethod::methods) {
+        method.vertexSubroutine.index = glGetSubroutineIndex(
+                shaderProgramID, 
+                GL_VERTEX_SHADER, 
+                method.vertexSubroutine.name
+        );
+        method.fragmentSubroutine.index = glGetSubroutineIndex(
                 shaderProgramID, 
                 GL_FRAGMENT_SHADER, 
-                mode.name
+                method.fragmentSubroutine.name
         );
     }
 }
@@ -245,6 +246,7 @@ void Renderer::checkAndUpdateViewMatrix() {
     }
 }
 
-void Renderer::setShadingMode(ShadingMode mode) {
-    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &mode.uniformID);
+void Renderer::setShadingMethod(ShadingMethod method) {
+    glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &method.vertexSubroutine.index);
+    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &method.fragmentSubroutine.index);
 }

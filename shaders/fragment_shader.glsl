@@ -1,6 +1,9 @@
 #version 450 core
 out vec4 fragment_color;
 
+in vec4 world_fragment_position;
+in vec4 world_fragment_normal;
+
 subroutine vec3 shading_mode();
 subroutine uniform shading_mode shading_function;
 
