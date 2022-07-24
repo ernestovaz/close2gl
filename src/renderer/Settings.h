@@ -22,6 +22,6 @@ public:
     static float fieldOfView;
     static float nearPlane;
     static float farPlane;
-    static int reverseFaceOrientation;
     static bool cullingEnabled;
+    static int reverseFaceOrientation;
 };

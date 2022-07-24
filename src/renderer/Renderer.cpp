@@ -25,6 +25,10 @@ using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
 
+vector<ShadingMode> Renderer::shadingModes{
+    ShadingMode("no_shading")
+};
+
 Renderer::Renderer() {
     if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
         cerr << "ERROR INITIALIZING GLAD" << endl;
@@ -34,20 +38,22 @@ Renderer::Renderer() {
     unsigned int vertexShaderID, fragmentShaderID;
     vertexShaderID = loadShader(VERTEX_SHADER_LOCATION, GL_VERTEX_SHADER);
     fragmentShaderID = loadShader(FRAGMENT_SHADER_LOCATION, GL_FRAGMENT_SHADER);
-    this->shaderProgramID = createShaderProgram(vertexShaderID, fragmentShaderID);
+
+    shaderProgramID = createShaderProgram(vertexShaderID, fragmentShaderID);
     glDeleteShader(vertexShaderID);
     glDeleteShader(fragmentShaderID);
 
-    this->modelUniformID = glGetUniformLocation(shaderProgramID, "model");
-    this->viewUniformID = glGetUniformLocation(shaderProgramID, "view");
-    this->projectionUniformID = glGetUniformLocation(shaderProgramID, "projection");
-    this->colorUniformID = glGetUniformLocation(shaderProgramID, "color");
+    modelUniformID = glGetUniformLocation(shaderProgramID, "model");
+    viewUniformID = glGetUniformLocation(shaderProgramID, "view");
+    projectionUniformID = glGetUniformLocation(shaderProgramID, "projection");
+    colorUniformID = glGetUniformLocation(shaderProgramID, "color");
 
+    initializeModelMatrix();
     updateProjectionMatrix();
     updateViewMatrix();
 
-    glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(mat4(1.0f)));
-
+    initializeShadingFunctions();
+    setShadingMode(shadingModes[0]);
 }
 
 void Renderer::setModel(Model model) {
@@ -190,21 +196,18 @@ unsigned int Renderer::createShaderProgram(
     return programID;
 }
 
-void Renderer::checkAndUpdateProjectionMatrix() {
-    if (Window::hasSizeChanged) {
-        glViewport(0, 0, Window::width, Window::height);
-        updateProjectionMatrix();
-        Window::hasSizeChanged = false;
+void Renderer::initializeShadingFunctions() {
+    for (ShadingMode mode : shadingModes) {
+        mode.uniformID = glGetSubroutineIndex(
+                shaderProgramID, 
+                GL_FRAGMENT_SHADER, 
+                mode.name
+        );
     }
 }
 
-void Renderer::checkAndUpdateViewMatrix() {
-    if (Camera::hasChanged) {
-        updateViewMatrix();
-        lastCameraPosition = Camera::position;
-        lastCameraDirection = Camera::direction;
-        Camera::hasChanged = false;
-    }
+void Renderer::initializeModelMatrix() {
+    glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(mat4(1.0f)));
 }
 
 void Renderer::updateProjectionMatrix() {
@@ -225,4 +228,23 @@ void Renderer::updateViewMatrix() {
             Camera::up
     );
     glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(viewMatrix));
+}
+
+void Renderer::checkAndUpdateProjectionMatrix() {
+    if (Window::hasSizeChanged) {
+        glViewport(0, 0, Window::width, Window::height);
+        updateProjectionMatrix();
+        Window::hasSizeChanged = false;
+    }
+}
+
+void Renderer::checkAndUpdateViewMatrix() {
+    if (Camera::hasChanged) {
+        updateViewMatrix();
+        Camera::hasChanged = false;
+    }
+}
+
+void Renderer::setShadingMode(ShadingMode mode) {
+    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &mode.uniformID);
 }
