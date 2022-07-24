@@ -14,6 +14,10 @@
 using glm::normalize;
 using glm::cross;
 using glm::radians;
+using glm::rotate;
+
+#define MAX_ROTATION  radians( 360.0f)
+#define MIN_ROTATION  radians(-360.0f)
 
 float Camera::movementUnits;
 
@@ -21,9 +25,15 @@ vec3 Camera::position;
 vec3 Camera::direction; 
 vec3 Camera::up; 
 
+float Camera::yaw   = radians(90.0f);
+float Camera::pitch = 0.0f;
+float Camera::roll = 0.0f;
+
 vec3 Camera::focusPoint; 
 vec3 Camera::firstPosition; 
 bool Camera::shouldFocusCenter = false;
+
+bool Camera::hasChanged = false;
 
 Camera::Camera() {
     position  = vec3(0.0f, 0.0f,  0.0f);
@@ -37,29 +47,37 @@ void Camera::setFocusPoint(vec3 focusPoint, float boundingBoxSide) {
     position.z = (boundingBoxSide/2)/tan(Settings::fieldOfView/2.0);
     firstPosition = position;
     focus();
+    hasChanged = true;
 }
 
-void Camera::updateDirection(float x, float y) {
+void Camera::updateDirection(float xMovement, float yMovement) {
     if(!shouldFocusCenter){
-        vec3 left = cross(direction, up);
-        // pitch rotation
-        vec3 newDirection = rotate(direction, radians(-y*SENSITIVITY), left);
-        // lock pitch into 85 degrees
-        if(angle(newDirection, up) > radians(5.0f) 
-                && angle(newDirection,-up) > radians(5.0f)) {
-            direction = newDirection;
-        }
-        // yaw rotation
-        direction = rotate(direction, radians(-x*SENSITIVITY), up);
+        yaw     -= xMovement;
+        pitch   -= yMovement;
+        normalizeRotation();
+        vec3 newDirection;
+        newDirection.x = cos(yaw) * cos(pitch);
+        newDirection.y = sin(pitch);
+        newDirection.z = -(sin(yaw) * cos(pitch));
+        direction = newDirection;
+        hasChanged = true;
     }
+}
+
+void Camera::setRoll(float newRoll) {
+    roll = radians(newRoll);
+    up = rotate(vec3(0.0f, 1.0f, 0.0f), roll, direction);
+    hasChanged = true;
 }
 
 void Camera::moveFront() {
     position += direction * movementUnits;
+    hasChanged = true;
 }
 
 void Camera::moveBack() {
     position -= direction * movementUnits;
+    hasChanged = true;
 }
 
 void Camera::moveRight() {
@@ -67,6 +85,7 @@ void Camera::moveRight() {
     vec3 right = cross(-direction, up);
     position -= right * movementUnits;
     if(shouldFocusCenter) focus();
+    hasChanged = true;
 }
 
 void Camera::moveLeft() {
@@ -74,7 +93,7 @@ void Camera::moveLeft() {
     vec3 left = cross(direction, up);
     position -= left * movementUnits;
     if(shouldFocusCenter) focus();
-
+    hasChanged = true;
 }
 
 void Camera::moveUp() {
@@ -83,6 +102,7 @@ void Camera::moveUp() {
     vec3 upFromCamera = cross(direction, right);
     position += upFromCamera * movementUnits;
     if(shouldFocusCenter) focus();
+    hasChanged = true;
 }
 
 void Camera::moveDown() {
@@ -91,18 +111,28 @@ void Camera::moveDown() {
     vec3 downFromCamera = cross(direction, left);
     position += downFromCamera * movementUnits;
     if(shouldFocusCenter) focus();
+    hasChanged = true;
 }
 
 void Camera::center() {
     shouldFocusCenter = not shouldFocusCenter;
     if (shouldFocusCenter) focus();
+    hasChanged = true;
 }
 
 void Camera::reset() {
     position = firstPosition;
     focus();
+    hasChanged = true;
 }
 
 void Camera::focus() {
     direction = normalize(focusPoint - position);
+    pitch = asin(direction.y);
+    yaw = acos(direction.x /cos(pitch));
+}
+
+void Camera::normalizeRotation() {
+    yaw     = fmin(MAX_ROTATION, fmax(yaw, MIN_ROTATION));
+    pitch   = fmin(MAX_ROTATION, fmax(pitch, MIN_ROTATION));
 }

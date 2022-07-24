@@ -20,7 +20,15 @@ public:
     static vec3 direction;
     static vec3 up;
     static float movementUnits;
+    static bool shouldFocusCenter;
 
+    static float yaw;
+    static float pitch;
+    static float roll;
+
+    static bool hasChanged;
+
+    static void setRoll(float);
     static void moveFront();
     static void moveBack();
     static void moveRight();
@@ -32,7 +40,8 @@ public:
     static void reset();
 
 private:
-    static bool shouldFocusCenter;
     static vec3 focusPoint;
     static vec3 firstPosition;
+
+    static void normalizeRotation();
 };

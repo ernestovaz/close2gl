@@ -18,13 +18,15 @@ public:
     double getTimeSinceLastFrame();
     static const char* getProcessAddress();
 
-    static int width;
-    static int height;
+    static int  width;
+    static int  height;
+    static bool hasSizeChanged;
 
     static void cursorPositionCallback(GLFWwindow*, double, double);
     static void mouseButtonCallback(GLFWwindow*, int, int , int);
     static void windowSizeChangedCallback(GLFWwindow*, int, int);
     static void keyCallback(GLFWwindow*, int, int, int, int); 
+
 private:
     static GLFWwindow* window;
 
@@ -34,8 +36,6 @@ private:
     static bool hasMouseMoved;
     static bool exitKeyWasPressed;
     static bool cameraIsBeingMoved;
-    static float mouseXPosition;
-    static float mouseYPosition;
-
-
+    static float lastMouseXPosition;
+    static float lastMouseYPosition;
 };

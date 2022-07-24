@@ -191,19 +191,19 @@ unsigned int Renderer::createShaderProgram(
 }
 
 void Renderer::checkAndUpdateProjectionMatrix() {
-    if (Window::width != this->lastScreenWidth 
-        || Window::height != this->lastScreenHeight) {
+    if (Window::hasSizeChanged) {
         glViewport(0, 0, Window::width, Window::height);
         updateProjectionMatrix();
+        Window::hasSizeChanged = false;
     }
 }
 
 void Renderer::checkAndUpdateViewMatrix() {
-    if (Camera::position != lastCameraPosition
-        || Camera::direction != lastCameraDirection) {
+    if (Camera::hasChanged) {
         updateViewMatrix();
         lastCameraPosition = Camera::position;
         lastCameraDirection = Camera::direction;
+        Camera::hasChanged = false;
     }
 }
 

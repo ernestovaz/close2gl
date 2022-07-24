@@ -9,9 +9,10 @@ GLFWwindow* Window::window;
 
 int Window::width = DEFAULT_WIDTH;
 int Window::height = DEFAULT_HEIGHT;
+bool Window::hasSizeChanged = false;
 
-float Window::mouseXPosition;
-float Window::mouseYPosition;
+float Window::lastMouseXPosition;
+float Window::lastMouseYPosition;
 bool Window::hasMouseMoved = false;
 bool Window::exitKeyWasPressed = false;
 bool Window::cameraIsBeingMoved = false;
@@ -72,24 +73,22 @@ const char* Window::getProcessAddress() {
     return (const char*) glfwGetProcAddress;
 }
 
-void Window::cursorPositionCallback(GLFWwindow* w, double xPos, double yPos) {
+void Window::cursorPositionCallback(GLFWwindow* w, double xPosition, double yPosition) {
     if(cameraIsBeingMoved) {
         if(!hasMouseMoved) {
-            glfwSetCursorPos(w, width/2.0f, height/2.0f);
             hasMouseMoved = true;
         } else {
-            float normalizedX = (xPos - width / 2.0f ) / width;
-            float normalizedY = (yPos - height / 2.0f ) / height;
-            Camera::updateDirection(normalizedX, normalizedY);
-            glfwSetCursorPos(w, width/2.0f, height/2.0f);
-            mouseXPosition = xPos;
-            mouseYPosition = yPos;
+            float xMovement = xPosition - lastMouseXPosition;
+            float yMovement = yPosition - lastMouseYPosition;
+            Camera::updateDirection(xMovement*0.002, yMovement*0.002);
         }
+        lastMouseXPosition = xPosition;
+        lastMouseYPosition = yPosition;
     }
 }
 
 void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int modes) {
-    if (!settingsToolbox->isHandlingMouse() && button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (!settingsToolbox->isHandlingMouse() && !Camera::shouldFocusCenter && button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
             glfwSetInputMode(w, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             cameraIsBeingMoved = true;
@@ -100,7 +99,6 @@ void Window::mouseButtonCallback(GLFWwindow* w, int button, int action, int mode
         }
     }
 }
-
 
 void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
@@ -134,5 +132,6 @@ void Window::keyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 void Window::windowSizeChangedCallback(GLFWwindow* w, int width, int height) {
     Window::width = width;
     Window::height = height;
+    Window::hasSizeChanged = true;
 }
 

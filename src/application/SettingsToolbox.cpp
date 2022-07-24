@@ -104,6 +104,13 @@ void SettingsToolbox::render() {
 
         ImGui::PushItemWidth(100);
         ImGui::InputFloat("Movement Units", &Camera::movementUnits, 0.5);
+        static float cameraRoll = 0.0f;
+        static float lastCameraRoll = cameraRoll;
+        ImGui::SliderFloat("Camera Roll",&cameraRoll,-360.0f,360.0f);
+        if(lastCameraRoll != cameraRoll) {
+            Camera::setRoll(cameraRoll);
+            lastCameraRoll = cameraRoll;
+        }
 
         static bool cameraIsCentered = false;
         if(ImGui::Checkbox("Center Camera", &cameraIsCentered)) {
