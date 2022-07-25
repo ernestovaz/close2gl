@@ -26,6 +26,7 @@ using glm::vec3;
 using glm::radians;
 
 int Renderer::currentShadingMethod = 1;
+RenderingAPI Renderer::currentAPI = RenderingAPI::Close2GL;
 
 Renderer::Renderer() {
     if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
@@ -34,13 +35,10 @@ Renderer::Renderer() {
     }
     glEnable(GL_DEPTH_TEST);  
     glEnable(GL_PROGRAM_POINT_SIZE);
-    unsigned int vertexShaderID, fragmentShaderID;
-    vertexShaderID = loadShader(VERTEX_SHADER_LOCATION, GL_VERTEX_SHADER);
-    fragmentShaderID = loadShader(FRAGMENT_SHADER_LOCATION, GL_FRAGMENT_SHADER);
 
-    shaderProgramID = createShaderProgram(vertexShaderID, fragmentShaderID);
-    glDeleteShader(vertexShaderID);
-    glDeleteShader(fragmentShaderID);
+    //openGLProgramID = createOpenGLShaderProgram();
+    close2GLProgramID = createClose2GLShaderProgram();
+    shaderProgramID = close2GLProgramID;
 
     modelUniformID = glGetUniformLocation(shaderProgramID, "model");
     viewUniformID = glGetUniformLocation(shaderProgramID, "view");
@@ -51,7 +49,7 @@ Renderer::Renderer() {
     updateProjectionMatrix();
     updateViewMatrix();
 
-    initializeShadingSubroutines();
+    //initializeShadingSubroutines();
 }
 
 void Renderer::setModel(Model model) {
@@ -107,7 +105,8 @@ void Renderer::render() {
     glClearColor(0.10f, 0.09f, 0.10f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindVertexArray(vertexArrayID);
-    setShadingMethod(ShadingMethod::methods.at(currentShadingMethod)); 
+    glUseProgram(shaderProgramID);
+    //setShadingMethod(ShadingMethod::methods.at(currentShadingMethod)); 
 
     checkAndUpdateViewMatrix();
     checkAndUpdateProjectionMatrix();
@@ -136,6 +135,64 @@ void Renderer::render() {
     glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_INT, (void*)0);
 
     glBindVertexArray(0);
+}
+
+unsigned int Renderer::createOpenGLShaderProgram() {
+    unsigned int vertexShaderID, fragmentShaderID;
+    string baseShaderLocation = OPENGL_SHADER_LOCATION;
+
+    string vertexShaderLocation = baseShaderLocation + "vertex_shader.glsl";
+    vertexShaderID = loadShader(vertexShaderLocation, GL_VERTEX_SHADER);
+
+    string fragmentShaderLocation = baseShaderLocation + "fragment_shader.glsl";
+    fragmentShaderID = loadShader(fragmentShaderLocation, GL_FRAGMENT_SHADER);
+
+    unsigned int programID = createShaderProgram(vertexShaderID, fragmentShaderID);
+    glDeleteShader(vertexShaderID);
+    glDeleteShader(fragmentShaderID);
+    return programID;
+}
+
+unsigned int Renderer::createClose2GLShaderProgram() {
+    unsigned int vertexShaderID, fragmentShaderID;
+    string baseShaderLocation = CLOSE2GL_SHADER_LOCATION;
+
+    string vertexShaderLocation = baseShaderLocation + "vertex_shader.glsl";
+    vertexShaderID = loadShader(vertexShaderLocation, GL_VERTEX_SHADER);
+
+    string fragmentShaderLocation = baseShaderLocation + "fragment_shader.glsl";
+    fragmentShaderID = loadShader(fragmentShaderLocation, GL_FRAGMENT_SHADER);
+
+    unsigned int programID = createShaderProgram(vertexShaderID, fragmentShaderID);
+    glDeleteShader(vertexShaderID);
+    glDeleteShader(fragmentShaderID);
+    return programID;
+}
+
+unsigned int Renderer::createShaderProgram(
+        unsigned int vertexShaderID, 
+        unsigned int fragmentShaderID) {
+    unsigned int programID;
+
+    programID = glCreateProgram();
+    glAttachShader(programID, vertexShaderID);
+    glAttachShader(programID, fragmentShaderID);
+    linkShaderProgram(programID);
+    glUseProgram(programID);
+
+    return programID;
+}
+
+void Renderer::linkShaderProgram(unsigned int shaderProgramID) {
+    glLinkProgram(shaderProgramID);
+    int successful;
+    glGetProgramiv(shaderProgramID, GL_LINK_STATUS, &successful);
+    if(!successful) {
+        char errorLog[512];
+        glGetProgramInfoLog(shaderProgramID, 512, NULL, errorLog);
+        cerr << "ERROR LINKING SHADER PROGRAM " << shaderProgramID << ": " << errorLog << endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 unsigned int Renderer::loadShader(string pathToShader, unsigned int shaderType) {
@@ -168,32 +225,6 @@ unsigned int Renderer::loadShader(string pathToShader, unsigned int shaderType) 
     }
         
     return shaderID;
-}
-
-void Renderer::linkShaderProgram(unsigned int shaderProgramID) {
-    glLinkProgram(shaderProgramID);
-    int successful;
-    glGetProgramiv(shaderProgramID, GL_LINK_STATUS, &successful);
-    if(!successful) {
-        char errorLog[512];
-        glGetProgramInfoLog(shaderProgramID, 512, NULL, errorLog);
-        cerr << "ERROR LINKING SHADER PROGRAM " << shaderProgramID << ": " << errorLog << endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-unsigned int Renderer::createShaderProgram(
-        unsigned int vertexShaderID, 
-        unsigned int fragmentShaderID) {
-    unsigned int programID;
-
-    programID = glCreateProgram();
-    glAttachShader(programID, vertexShaderID);
-    glAttachShader(programID, fragmentShaderID);
-    linkShaderProgram(programID);
-    glUseProgram(programID);
-
-    return programID;
 }
 
 void Renderer::initializeShadingSubroutines() {

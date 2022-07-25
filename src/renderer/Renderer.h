@@ -9,9 +9,10 @@
 
 using std::string;
 
-#define VERTEX_SHADER_LOCATION "../shaders/vertex_shader.glsl"
-#define FRAGMENT_SHADER_LOCATION "../shaders/fragment_shader.glsl"
+#define OPENGL_SHADER_LOCATION "../src/openGL/shaders/"
+#define CLOSE2GL_SHADER_LOCATION "../src/close2GL/shaders/"
 
+enum class RenderingAPI { OpenGL, Close2GL };
 
 class Renderer {
 public:
@@ -20,8 +21,13 @@ public:
     void render();
 
     static int currentShadingMethod;
+    static RenderingAPI currentAPI;
 private:
+    unsigned int openGLProgramID;
+    unsigned int close2GLProgramID;
     unsigned int shaderProgramID;
+
+
     unsigned int vertexArrayID;
 
     Model model;
@@ -32,9 +38,11 @@ private:
     int colorUniformID;
     int shadingSubroutineID;
 
-    unsigned int loadShader(string, unsigned int);
-    unsigned int createShaderProgram(unsigned int, unsigned int);
+    unsigned int createOpenGLShaderProgram();
+    unsigned int createClose2GLShaderProgram();
     void linkShaderProgram(unsigned int);
+    unsigned int createShaderProgram(unsigned int, unsigned int);
+    unsigned int loadShader(string, unsigned int);
 
     void initializeShadingSubroutines();
 

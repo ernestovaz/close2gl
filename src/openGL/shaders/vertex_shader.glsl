@@ -1,4 +1,5 @@
-#version 450 core
+#version 330 core
+#extension GL_ARB_shader_subroutine : require
 layout (location = 0) in vec3 vertex_position;
 layout (location = 1) in vec3 vertex_normal;
 
