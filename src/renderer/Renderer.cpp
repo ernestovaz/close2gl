@@ -195,7 +195,13 @@ void Renderer::close2GLRender() {
 
     mat4 model =        mat4(1.0f);
     mat4 view  =        openGLViewMatrix();
-    mat4 projection =   openGLProjectionMatrix();
+    mat4 projection =   Close2GL::projectionMatrix(
+            Settings::fieldOfView, 
+            Settings::fieldOfView,
+            Settings::nearPlane,
+            Settings::farPlane
+    );
+    
     mat4 transformation = projection * view * model;
 
     vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
