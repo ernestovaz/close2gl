@@ -14,7 +14,7 @@ public:
     Camera();
 
     static void updateDirection(float, float);
-    static void setFocusPoint(vec3, float);
+    static void setFocusPoint(vec3, float, float);
 
     static vec3 position;
     static vec3 direction;

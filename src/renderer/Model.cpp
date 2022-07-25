@@ -12,27 +12,13 @@ using std::cerr;
 using std::endl;
 using std::fmax;
 
-// Default model falls back to a single triangle
-Model::Model(){
-    indices = {0, 1, 2}; 
-    positions = {
-        vec3(-0.5f, -0.5f, 0.0f),
-        vec3( 0.5f, -0.5f, 0.0f),
-        vec3( 0.0f,  0.5f, 0.0f)
-    };
-}
+vector<vec3>            Model::positions;
+vector<vec3>            Model::normals;
+vector<unsigned int>    Model::indices;
 
-Model::Model(string filepath) {
-    loadFromFile(filepath);
-}
-
-vec3 Model::getCenter() {
-    return boundingBoxCenter;
-}
-
-float Model::getBoundingBoxSide() {
-    return boundingBoxLargestSide;
-}
+vec3    Model::center;
+float   Model::width;
+float   Model::length;
 
 void Model::loadFromFile(string filepath) {
     Assimp::Importer importer;
@@ -97,13 +83,11 @@ void Model::loadFromFile(string filepath) {
         }
     }
 
-    vec3 boundingBoxCenter;
-    boundingBoxCenter.y = (right + left)/2.0f;
-    boundingBoxCenter.x = (top + bottom)/2.0f;
-    boundingBoxCenter.z = (end + begin)/2.0f;
-    this->boundingBoxCenter = boundingBoxCenter;
-    this->boundingBoxLargestSide = fmax(fmax(fabs(right - left), fabs(top - bottom)), fabs(end - begin));
-
+    center.y = (right + left)/2.0f;
+    center.x = (top + bottom)/2.0f;
+    center.z = (end + begin)/2.0f;
+    width   = fmax(fabs(right - left), fabs(top - bottom));
+    length  = fabs(begin - center.z);
 }
 
 ostream& operator<<(ostream& str, const Model& model){

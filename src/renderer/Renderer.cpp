@@ -50,13 +50,12 @@ Renderer::Renderer() {
     updateViewMatrix();
 
     //initializeShadingSubroutines();
+    initializeModelArrays(); 
 }
 
-void Renderer::setModel(Model model) {
+void Renderer::initializeModelArrays() {
     unsigned int vertexArrayID, elementArrayBufferID,
                  positionBufferID, normalBufferID;
-
-    this->model = model;
 
     // set up VAO
     glGenVertexArrays(1, &vertexArrayID);
@@ -67,8 +66,8 @@ void Renderer::setModel(Model model) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBufferID);
     glBufferData(
             GL_ELEMENT_ARRAY_BUFFER, 
-            this->model.indices.size() * sizeof(unsigned int), 
-            this->model.indices.data(), 
+            Model::indices.size() * sizeof(unsigned int), 
+            Model::indices.data(), 
             GL_STATIC_DRAW
     );
 
@@ -78,8 +77,8 @@ void Renderer::setModel(Model model) {
     glBindBuffer(GL_ARRAY_BUFFER, positionBufferID);
     glBufferData(
             GL_ARRAY_BUFFER, 
-            this->model.positions.size() * sizeof(vec3), 
-            this->model.positions.data(), 
+            Model::positions.size() * sizeof(vec3), 
+            Model::positions.data(), 
             GL_STATIC_DRAW
     );
     glVertexAttribPointer(0,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
@@ -90,15 +89,14 @@ void Renderer::setModel(Model model) {
     glBindBuffer(GL_ARRAY_BUFFER, normalBufferID);
     glBufferData(
             GL_ARRAY_BUFFER, 
-            this->model.normals.size() * sizeof(vec3), 
-            this->model.normals.data(), 
+            Model::normals.size() * sizeof(vec3), 
+            Model::normals.data(), 
             GL_STATIC_DRAW
     );
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
 
     this->vertexArrayID = vertexArrayID;
-
 }
 
 void Renderer::render() {
@@ -132,7 +130,7 @@ void Renderer::render() {
     if(Settings::reverseFaceOrientation) glFrontFace(GL_CW);
     else glFrontFace(GL_CCW);
 
-    glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_INT, (void*)0);
+    glDrawElements(GL_TRIANGLES, Model::indices.size(), GL_UNSIGNED_INT, (void*)0);
 
     glBindVertexArray(0);
 }

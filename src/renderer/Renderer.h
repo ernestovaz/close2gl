@@ -17,20 +17,17 @@ enum class RenderingAPI { OpenGL, Close2GL };
 class Renderer {
 public:
     Renderer();
-    void setModel(Model);
     void render();
 
     static int currentShadingMethod;
     static RenderingAPI currentAPI;
+
 private:
     unsigned int openGLProgramID;
     unsigned int close2GLProgramID;
     unsigned int shaderProgramID;
 
-
     unsigned int vertexArrayID;
-
-    Model model;
 
     int modelUniformID;
     int viewUniformID;
@@ -45,6 +42,7 @@ private:
     unsigned int loadShader(string, unsigned int);
 
     void initializeShadingSubroutines();
+    void initializeModelArrays();
 
     void setShadingMethod(ShadingMethod);
     void initializeModelMatrix();

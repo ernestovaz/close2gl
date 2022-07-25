@@ -10,6 +10,7 @@
 #include <glm/gtx/vector_angle.hpp>
 
 #include "Settings.h"
+#include "Model.h"
 
 using glm::normalize;
 using glm::cross;
@@ -40,11 +41,13 @@ Camera::Camera() {
     direction = vec3(0.0f, 0.0f, -1.0f);
     up        = vec3(0.0f, 1.0f,  0.0f);
     movementUnits = DEFAULT_MOVEMENT_UNITS;
+    setFocusPoint(Model::center, Model::width, Model::length);
 }
 
-void Camera::setFocusPoint(vec3 focusPoint, float boundingBoxSide) {
+void Camera::setFocusPoint(vec3 focusPoint, float width, float length) {
     Camera::focusPoint = focusPoint;
-    position.z = (boundingBoxSide/2)/tan(Settings::fieldOfView/2.0);
+    Camera::position = focusPoint;
+    position.z += (width/2)/tan(Settings::fieldOfView/2.0) + length;
     firstPosition = position;
     focus();
     hasChanged = true;

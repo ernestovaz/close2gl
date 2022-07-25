@@ -14,22 +14,15 @@ using glm::vec3;
 
 class Model {
 public:
-    vector<vec3>         positions;
-    vector<vec3>         normals;
-    vector<unsigned int> indices;
+    static vector<vec3>         positions;
+    static vector<vec3>         normals;
+    static vector<unsigned int> indices;
 
-    vec3 boundingBoxCenter;
-    float boundingBoxLargestSide;
+    static vec3 center;
+    static float width;
+    static float length;
 
-    Model();
-    Model(string);
-    vec3 getCenter();
-    float getBoundingBoxSide();
-
-private:
-    void loadFromFile(string);
-    void calculateBoundingBox();
-
+    static void loadFromFile(string);
 };
 
 ostream& operator<<(ostream&, const Model&);
