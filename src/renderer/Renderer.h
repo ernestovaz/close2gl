@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/vec3.hpp>
+#include <glm/glm.hpp>
+
 #include <string>
 #include <vector>
 
@@ -8,6 +10,7 @@
 #include "Model.h"
 
 using std::string;
+using glm::mat4;
 
 #define OPENGL_SHADER_LOCATION "../src/openGL/shaders/"
 #define CLOSE2GL_SHADER_LOCATION "../src/close2GL/shaders/"
@@ -23,17 +26,26 @@ public:
     static RenderingAPI currentAPI;
 
 private:
-    unsigned int openGLProgramID;
-    unsigned int close2GLProgramID;
-    unsigned int shaderProgramID;
+    unsigned int openGLProgram;
+    unsigned int close2GLProgram;
 
-    unsigned int vertexArrayID;
 
-    int modelUniformID;
-    int viewUniformID;
-    int projectionUniformID;
-    int colorUniformID;
-    int shadingSubroutineID;
+    unsigned int openGLVAO;
+    unsigned int openGLEBO;
+    unsigned int close2GLVAO;
+    unsigned int close2GLEBO;
+    unsigned int close2GLVBO;
+
+    int openGLModelUniform;
+    int openGLViewUniform;
+    int openGLProjectionUniform;
+    int openGLColorUniform;
+    int openGLShadingSubroutine;
+
+    int close2GLColorUniform;
+
+    void openGLRender();
+    void close2GLRender();
 
     unsigned int createOpenGLShaderProgram();
     unsigned int createClose2GLShaderProgram();
@@ -41,13 +53,15 @@ private:
     unsigned int createShaderProgram(unsigned int, unsigned int);
     unsigned int loadShader(string, unsigned int);
 
-    void initializeShadingSubroutines();
-    void initializeModelArrays();
+    void initializeOpenGL();
+    void initializeClose2GL();
+
+    unsigned int createOpenGLVAO();
+    void updateClose2GLVAO();
+
+    void initializeOpenGLShadingSubroutines();
 
     void setShadingMethod(ShadingMethod);
-    void initializeModelMatrix();
-    void updateProjectionMatrix();
-    void updateViewMatrix();
-    void checkAndUpdateProjectionMatrix();
-    void checkAndUpdateViewMatrix();
+    mat4 openGLProjectionMatrix();
+    mat4 openGLViewMatrix();
 };

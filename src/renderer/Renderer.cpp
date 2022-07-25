@@ -6,12 +6,12 @@
 #include <cstdlib>
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Settings.h"
 #include "../application/Window.h"
+#include "../close2GL/Close2GL.h"
 
 using std::cerr;
 using std::exit;
@@ -36,34 +36,71 @@ Renderer::Renderer() {
     glEnable(GL_DEPTH_TEST);  
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    //openGLProgramID = createOpenGLShaderProgram();
-    close2GLProgramID = createClose2GLShaderProgram();
-    shaderProgramID = close2GLProgramID;
 
-    modelUniformID = glGetUniformLocation(shaderProgramID, "model");
-    viewUniformID = glGetUniformLocation(shaderProgramID, "view");
-    projectionUniformID = glGetUniformLocation(shaderProgramID, "projection");
-    colorUniformID = glGetUniformLocation(shaderProgramID, "color");
-
-    initializeModelMatrix();
-    updateProjectionMatrix();
-    updateViewMatrix();
-
-    //initializeShadingSubroutines();
-    initializeModelArrays(); 
+    //initializeOpenGL();
+    initializeClose2GL();
 }
 
-void Renderer::initializeModelArrays() {
-    unsigned int vertexArrayID, elementArrayBufferID,
-                 positionBufferID, normalBufferID;
+void Renderer::initializeOpenGL() {
+    openGLProgram = createOpenGLShaderProgram();
+
+    openGLModelUniform =        glGetUniformLocation(openGLProgram, "model");
+    openGLViewUniform =         glGetUniformLocation(openGLProgram, "view");
+    openGLProjectionUniform =   glGetUniformLocation(openGLProgram, "projection");
+    openGLColorUniform =        glGetUniformLocation(openGLProgram, "color");
+
+    openGLVAO = createOpenGLVAO(); 
+
+    initializeOpenGLShadingSubroutines();
+}
+
+void Renderer::initializeClose2GL() {
+    mat4 model =        mat4(1.0f);
+    mat4 view  =        openGLViewMatrix();
+    mat4 projection =   openGLProjectionMatrix();
+    mat4 transformation = projection * view * model;
+
+    vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
+
+    close2GLProgram = createClose2GLShaderProgram();
+    close2GLColorUniform = glGetUniformLocation(close2GLProgram, "color");
+
+    glGenVertexArrays(1, &close2GLVAO);
+    glBindVertexArray(close2GLVAO);
+
+    glGenBuffers(1, &close2GLEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, close2GLEBO);
+    glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, 
+            Model::indices.size() * sizeof(unsigned int), 
+            Model::indices.data(), 
+            GL_STATIC_DRAW
+    );
+
+    glGenBuffers(1, &close2GLVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, close2GLVBO);
+    glBufferData(
+            GL_ARRAY_BUFFER, 
+            positions.size() * sizeof(vec3), 
+            positions.data(), 
+            GL_STATIC_DRAW
+    );
+    glVertexAttribPointer(0,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+}
+
+unsigned int Renderer::createOpenGLVAO() {
+    unsigned int vertexArrayID, positionBufferID, normalBufferID;
 
     // set up VAO
     glGenVertexArrays(1, &vertexArrayID);
     glBindVertexArray(vertexArrayID);
 
     // set up EBO
-    glGenBuffers(1, &elementArrayBufferID);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBufferID);
+    glGenBuffers(1, &openGLEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, openGLEBO);
     glBufferData(
             GL_ELEMENT_ARRAY_BUFFER, 
             Model::indices.size() * sizeof(unsigned int), 
@@ -96,20 +133,19 @@ void Renderer::initializeModelArrays() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
 
-    this->vertexArrayID = vertexArrayID;
+    glBindVertexArray(0);
+
+    return vertexArrayID;
 }
 
 void Renderer::render() {
+    if (Window::hasSizeChanged) {
+        glViewport(0, 0, Window::width, Window::height);
+        Window::hasSizeChanged = false;
+    }
+
     glClearColor(0.10f, 0.09f, 0.10f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindVertexArray(vertexArrayID);
-    glUseProgram(shaderProgramID);
-    //setShadingMethod(ShadingMethod::methods.at(currentShadingMethod)); 
-
-    checkAndUpdateViewMatrix();
-    checkAndUpdateProjectionMatrix();
-    glUniform3fv(colorUniformID, 1, value_ptr(Settings::renderingColor));
-
 
     switch(Settings::renderingPrimitive){
         case RenderingPrimitive::TRIANGLES:
@@ -129,9 +165,49 @@ void Renderer::render() {
 
     if(Settings::reverseFaceOrientation) glFrontFace(GL_CW);
     else glFrontFace(GL_CCW);
+    
+    if(currentAPI == RenderingAPI::OpenGL) openGLRender();
+    else close2GLRender();
+}
 
+void Renderer::openGLRender() {
+    glUseProgram(openGLProgram);
+    setShadingMethod(ShadingMethod::methods.at(currentShadingMethod)); 
+
+    mat4 model =        mat4(1.0f);
+    mat4 view  =        openGLViewMatrix();
+    mat4 projection =   openGLProjectionMatrix();
+
+    glUniformMatrix4fv(openGLModelUniform,1,GL_FALSE, value_ptr(model));
+    glUniformMatrix4fv(openGLViewUniform,1,GL_FALSE, value_ptr(view));
+    glUniformMatrix4fv(openGLProjectionUniform,1,GL_FALSE, value_ptr(projection));
+    glUniform3fv(openGLColorUniform, 1, value_ptr(Settings::renderingColor));
+
+    glBindVertexArray(openGLVAO);
     glDrawElements(GL_TRIANGLES, Model::indices.size(), GL_UNSIGNED_INT, (void*)0);
 
+    glBindVertexArray(0);
+}
+
+void Renderer::close2GLRender() {
+    glUseProgram(close2GLProgram);
+    glUniform3fv(close2GLColorUniform, 1, value_ptr(Settings::renderingColor));
+
+    mat4 model =        mat4(1.0f);
+    mat4 view  =        openGLViewMatrix();
+    mat4 projection =   openGLProjectionMatrix();
+    mat4 transformation = projection * view * model;
+
+    vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
+
+    glBindVertexArray(close2GLVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, close2GLVBO);
+    glBufferSubData(
+            GL_ARRAY_BUFFER, 0,
+            positions.size() * sizeof(vec3),
+            positions.data());
+
+    glDrawElements(GL_TRIANGLES, Model::indices.size(), GL_UNSIGNED_INT, (void*)0);
     glBindVertexArray(0);
 }
 
@@ -225,26 +301,22 @@ unsigned int Renderer::loadShader(string pathToShader, unsigned int shaderType) 
     return shaderID;
 }
 
-void Renderer::initializeShadingSubroutines() {
+void Renderer::initializeOpenGLShadingSubroutines() {
     for (ShadingMethod& method : ShadingMethod::methods) {
         method.vertexSubroutine.index = glGetSubroutineIndex(
-                shaderProgramID, 
+                openGLProgram, 
                 GL_VERTEX_SHADER, 
                 method.vertexSubroutine.name
         );
         method.fragmentSubroutine.index = glGetSubroutineIndex(
-                shaderProgramID, 
+                openGLProgram, 
                 GL_FRAGMENT_SHADER, 
                 method.fragmentSubroutine.name
         );
     }
 }
 
-void Renderer::initializeModelMatrix() {
-    glUniformMatrix4fv(modelUniformID,1,GL_FALSE, value_ptr(mat4(1.0f)));
-}
-
-void Renderer::updateProjectionMatrix() {
+mat4 Renderer::openGLProjectionMatrix() {
     float aspectRatio = (float) Window::width / (float) Window::height;
     mat4 projectionMatrix = perspective(
             radians(Settings::fieldOfView), 
@@ -252,31 +324,17 @@ void Renderer::updateProjectionMatrix() {
             Settings::nearPlane, 
             Settings::farPlane
     );
-    glUniformMatrix4fv(projectionUniformID,1,GL_FALSE, value_ptr(projectionMatrix));
+
+    return projectionMatrix;
 }
 
-void Renderer::updateViewMatrix() {
+mat4 Renderer::openGLViewMatrix() {
     mat4 viewMatrix = lookAt(
             Camera::position, 
             Camera::position+Camera::direction, 
             Camera::up
     );
-    glUniformMatrix4fv(viewUniformID,1,GL_FALSE, value_ptr(viewMatrix));
-}
-
-void Renderer::checkAndUpdateProjectionMatrix() {
-    if (Window::hasSizeChanged) {
-        glViewport(0, 0, Window::width, Window::height);
-        Window::hasSizeChanged = false;
-    }
-    updateProjectionMatrix();
-}
-
-void Renderer::checkAndUpdateViewMatrix() {
-    if (Camera::hasChanged) {
-        updateViewMatrix();
-        Camera::hasChanged = false;
-    }
+    return viewMatrix;
 }
 
 void Renderer::setShadingMethod(ShadingMethod method) {
