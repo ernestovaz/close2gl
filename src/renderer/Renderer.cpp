@@ -25,11 +25,14 @@ using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
 
+int Renderer::currentShadingMethod = 1;
+
 Renderer::Renderer() {
     if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
         cerr << "ERROR INITIALIZING GLAD" << endl;
         exit(EXIT_FAILURE);
     }
+    glEnable(GL_DEPTH_TEST);  
     glEnable(GL_PROGRAM_POINT_SIZE);
     unsigned int vertexShaderID, fragmentShaderID;
     vertexShaderID = loadShader(VERTEX_SHADER_LOCATION, GL_VERTEX_SHADER);
@@ -49,7 +52,6 @@ Renderer::Renderer() {
     updateViewMatrix();
 
     initializeShadingSubroutines();
-    setShadingMethod(ShadingMethod::methods[0]);
 }
 
 void Renderer::setModel(Model model) {
@@ -98,17 +100,19 @@ void Renderer::setModel(Model model) {
     glVertexAttribPointer(1,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
 
     this->vertexArrayID = vertexArrayID;
+
 }
 
 void Renderer::render() {
     glClearColor(0.10f, 0.09f, 0.10f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glUseProgram(shaderProgramID);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindVertexArray(vertexArrayID);
+    setShadingMethod(ShadingMethod::methods.at(currentShadingMethod)); 
 
     checkAndUpdateViewMatrix();
     checkAndUpdateProjectionMatrix();
     glUniform3fv(colorUniformID, 1, value_ptr(Settings::renderingColor));
+
 
     switch(Settings::renderingPrimitive){
         case RenderingPrimitive::TRIANGLES:
@@ -126,8 +130,8 @@ void Renderer::render() {
     if(Settings::cullingEnabled) glEnable(GL_CULL_FACE);
     else glDisable(GL_CULL_FACE);
 
-    if(Settings::reverseFaceOrientation) glFrontFace(GL_CCW);
-    else glFrontFace(GL_CW);
+    if(Settings::reverseFaceOrientation) glFrontFace(GL_CW);
+    else glFrontFace(GL_CCW);
 
     glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_INT, (void*)0);
 
@@ -193,7 +197,7 @@ unsigned int Renderer::createShaderProgram(
 }
 
 void Renderer::initializeShadingSubroutines() {
-    for (ShadingMethod method : ShadingMethod::methods) {
+    for (ShadingMethod& method : ShadingMethod::methods) {
         method.vertexSubroutine.index = glGetSubroutineIndex(
                 shaderProgramID, 
                 GL_VERTEX_SHADER, 
@@ -234,9 +238,9 @@ void Renderer::updateViewMatrix() {
 void Renderer::checkAndUpdateProjectionMatrix() {
     if (Window::hasSizeChanged) {
         glViewport(0, 0, Window::width, Window::height);
-        updateProjectionMatrix();
         Window::hasSizeChanged = false;
     }
+    updateProjectionMatrix();
 }
 
 void Renderer::checkAndUpdateViewMatrix() {
@@ -247,6 +251,6 @@ void Renderer::checkAndUpdateViewMatrix() {
 }
 
 void Renderer::setShadingMethod(ShadingMethod method) {
-    glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &method.vertexSubroutine.index);
-    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &method.fragmentSubroutine.index);
+    glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &(method.vertexSubroutine.index));
+    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &(method.fragmentSubroutine.index));
 }

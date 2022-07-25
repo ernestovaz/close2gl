@@ -19,8 +19,7 @@ public:
     void setModel(Model);
     void render();
 
-    static void setShadingMethod(ShadingMethod);
-
+    static int currentShadingMethod;
 private:
     unsigned int shaderProgramID;
     unsigned int vertexArrayID;
@@ -39,6 +38,7 @@ private:
 
     void initializeShadingSubroutines();
 
+    void setShadingMethod(ShadingMethod);
     void initializeModelMatrix();
     void updateProjectionMatrix();
     void updateViewMatrix();

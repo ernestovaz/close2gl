@@ -10,6 +10,7 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 #include "../renderer/Camera.h"
+#include "../renderer/Renderer.h"
 
 
 SettingsToolbox::SettingsToolbox(GLFWwindow* window) {
@@ -58,6 +59,14 @@ void SettingsToolbox::render() {
     if(ImGui::CollapsingHeader("Rendering")){
         ImGui::Indent(10.0f);
 
+        const char* shadingMethods[] = { 
+            "No Shading", 
+            "Gouraud (Ambient + Diffuse)",
+            "Gouraud (Ambient + Diffuse + Specular)"
+        };
+        ImGui::Combo("Shading Method", &Renderer::currentShadingMethod, 
+                shadingMethods, IM_ARRAYSIZE(shadingMethods));
+
         ImGui::PushItemWidth(180);
         ImGui::ColorEdit3("Model Color", glm::value_ptr(Settings::renderingColor));
 
@@ -72,7 +81,7 @@ void SettingsToolbox::render() {
 
         ImGui::PushItemWidth(45);
         static int* currentFaceOrientation = &Settings::reverseFaceOrientation;
-        ImGui::Combo("Triangle Face Orientation", currentFaceOrientation, "CW\0CCW\0");
+        ImGui::Combo("Triangle Face Orientation", currentFaceOrientation, "CCW\0CW\0");
 
         ImGui::PushItemWidth(60);
         ImGui::DragFloat("Near Plane", &Settings::nearPlane, 0.05);
