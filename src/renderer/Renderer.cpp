@@ -27,7 +27,7 @@ using glm::radians;
 using glm::degrees;
 
 int Renderer::currentShadingMethod = 0;
-RenderingAPI Renderer::currentAPI = RenderingAPI::Close2GL;
+RenderingAPI Renderer::currentAPI = RenderingAPI::OpenGL;
 
 Renderer::Renderer() {
     if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
@@ -199,7 +199,11 @@ void Renderer::close2GLRender() {
         Settings::horizontalFieldOfView = degrees(FOVx);
     } else FOVx = radians(Settings::horizontalFieldOfView);
 
-    mat4 view  =        openGLViewMatrix();
+    mat4 view  =        Close2GL::viewMatrix(
+            Camera::position,
+            Camera::direction,
+            Camera::up
+    );
     mat4 projection =   Close2GL::projectionMatrix(
             FOVx, FOVy, 
             Settings::nearPlane,

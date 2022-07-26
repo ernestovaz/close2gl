@@ -7,6 +7,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#define AI_CONFIG_PP_RVC_FLAGS aiComponent_NORMALS
+
 using std::exit;
 using std::cerr;
 using std::endl;
@@ -24,7 +26,7 @@ void Model::loadFromFile(string filepath) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(
             filepath, 
-            aiProcess_Triangulate);
+            aiProcess_Triangulate | aiProcess_RemoveComponent | aiProcess_GenSmoothNormals);
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) {
         cerr << "ERROR LOADING MODEL: " << importer.GetErrorString() << endl;

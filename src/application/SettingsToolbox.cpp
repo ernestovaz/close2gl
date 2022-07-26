@@ -69,7 +69,8 @@ void SettingsToolbox::render() {
         const char* shadingMethods[] = { 
             "No Shading", 
             "Gouraud (Ambient + Diffuse)",
-            "Gouraud (Ambient + Diffuse + Specular)"
+            "Gouraud (Ambient + Diffuse + Specular)",
+            "Phong (Ambient + Diffuse + Specular)"
         };
 
         if(*currentAPI == 1) {
@@ -77,6 +78,7 @@ void SettingsToolbox::render() {
             ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
             Renderer::currentShadingMethod = 0;
         }
+        ImGui::PushItemWidth(180);
         ImGui::Combo("Shading Method", &Renderer::currentShadingMethod, 
                 shadingMethods, IM_ARRAYSIZE(shadingMethods));
         if(*currentAPI == 1) {

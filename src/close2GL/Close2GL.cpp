@@ -31,6 +31,32 @@ mat4 Close2GL::projectionMatrix(float FOVx, float FOVy, float nearPlane, float f
     return projection;
 }
 
+mat4 Close2GL::viewMatrix(vec3 cameraPosition, vec3 cameraDirection, vec3 cameraUp) {
+    vec3 n = normalize(-cameraDirection);
+    vec3 u = cross(normalize(cameraUp), n);
+    vec3 v = cross(n,u);
+    mat4 projection(0.0);
+
+    projection[0][0] = u.x;
+    projection[1][0] = u.y;
+    projection[2][0] = u.z;
+    projection[3][0] = dot(-cameraPosition, u);
+
+    projection[0][1] = v.x;
+    projection[1][1] = v.y;
+    projection[2][1] = v.z;
+    projection[3][1] = dot(-cameraPosition, v);
+
+    projection[0][2] = n.x;
+    projection[1][2] = n.y;
+    projection[2][2] = n.z;
+    projection[3][2] = dot(-cameraPosition, n);
+
+    projection[3][3] = 1;
+
+    return projection;
+}
+
 float Close2GL::horizontalFieldOfView(float FOVy, float screenWidth, float screenHeight) {
     return 2.0f * atan(tan(FOVy/2.0f)/screenHeight*screenWidth);
 }
