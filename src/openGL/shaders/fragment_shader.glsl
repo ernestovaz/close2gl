@@ -1,5 +1,5 @@
-#version 330 core
-#extension GL_ARB_shader_subroutine : require
+#version 400 core
+
 out vec4 fragment_color;
 
 in vec4 world_position;

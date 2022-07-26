@@ -25,7 +25,7 @@ Window::Window() {
         exit(EXIT_FAILURE);
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "Render", NULL, NULL);
@@ -35,6 +35,7 @@ Window::Window() {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetWindowSizeLimits(window, 200, 200, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
     glfwSwapInterval(0);
     glfwSetCursorPosCallback(window, Window::cursorPositionCallback);

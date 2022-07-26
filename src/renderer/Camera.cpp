@@ -47,7 +47,7 @@ Camera::Camera() {
 void Camera::setFocusPoint(vec3 focusPoint, float width, float length) {
     Camera::focusPoint = focusPoint;
     Camera::position = focusPoint;
-    position.z += (width/2)/tan(Settings::fieldOfView/2.0) + length;
+    position.z += (width/2)/tan(Settings::verticalFieldOfView/2.0) + length;
     firstPosition = position;
     focus();
     hasChanged = true;

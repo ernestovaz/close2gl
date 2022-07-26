@@ -1,6 +1,7 @@
 #include "Settings.h"
 
-float Settings::fieldOfView                     = DEFAULT_FIELD_OF_VIEW;
+float Settings::verticalFieldOfView             = DEFAULT_FIELD_OF_VIEW;
+float Settings::horizontalFieldOfView           = DEFAULT_FIELD_OF_VIEW;
 float Settings::farPlane                        = DEFAULT_FAR_PLANE;
 float Settings::nearPlane                       = DEFAULT_NEAR_PLANE;
 int Settings::reverseFaceOrientation            = DEFAULT_FACE_ORIENTATION_REVERSE;

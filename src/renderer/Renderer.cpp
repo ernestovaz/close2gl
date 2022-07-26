@@ -25,7 +25,7 @@ using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
 
-int Renderer::currentShadingMethod = 1;
+int Renderer::currentShadingMethod = 0;
 RenderingAPI Renderer::currentAPI = RenderingAPI::Close2GL;
 
 Renderer::Renderer() {
@@ -37,7 +37,7 @@ Renderer::Renderer() {
     glEnable(GL_PROGRAM_POINT_SIZE);
 
 
-    //initializeOpenGL();
+    initializeOpenGL();
     initializeClose2GL();
 }
 
@@ -55,13 +55,6 @@ void Renderer::initializeOpenGL() {
 }
 
 void Renderer::initializeClose2GL() {
-    mat4 model =        mat4(1.0f);
-    mat4 view  =        openGLViewMatrix();
-    mat4 projection =   openGLProjectionMatrix();
-    mat4 transformation = projection * view * model;
-
-    vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
-
     close2GLProgram = createClose2GLShaderProgram();
     close2GLColorUniform = glGetUniformLocation(close2GLProgram, "color");
 
@@ -79,10 +72,13 @@ void Renderer::initializeClose2GL() {
 
     glGenBuffers(1, &close2GLVBO);
     glBindBuffer(GL_ARRAY_BUFFER, close2GLVBO);
+
+    // initialize with non-transformed positions, 
+    // transformation is done when rendering
     glBufferData(
             GL_ARRAY_BUFFER, 
-            positions.size() * sizeof(vec3), 
-            positions.data(), 
+            Model::positions.size() * sizeof(vec3), 
+            Model::positions.data(), 
             GL_STATIC_DRAW
     );
     glVertexAttribPointer(0,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
@@ -193,16 +189,18 @@ void Renderer::close2GLRender() {
     glUseProgram(close2GLProgram);
     glUniform3fv(close2GLColorUniform, 1, value_ptr(Settings::renderingColor));
 
-    mat4 model =        mat4(1.0f);
+    float FOVy = radians(Settings::verticalFieldOfView);
+    float FOVx = 2.0f * atan(tan(FOVy/2.0f)/Window::height*Window::width);
+
     mat4 view  =        openGLViewMatrix();
     mat4 projection =   Close2GL::projectionMatrix(
-            Settings::fieldOfView, 
-            Settings::fieldOfView,
+            FOVx,
+            FOVy, 
             Settings::nearPlane,
             Settings::farPlane
     );
     
-    mat4 transformation = projection * view * model;
+    mat4 transformation = projection * view;
 
     vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
 
@@ -325,7 +323,7 @@ void Renderer::initializeOpenGLShadingSubroutines() {
 mat4 Renderer::openGLProjectionMatrix() {
     float aspectRatio = (float) Window::width / (float) Window::height;
     mat4 projectionMatrix = perspective(
-            radians(Settings::fieldOfView), 
+            radians(Settings::verticalFieldOfView), 
             aspectRatio, 
             Settings::nearPlane, 
             Settings::farPlane

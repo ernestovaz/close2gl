@@ -16,7 +16,7 @@
 SettingsToolbox::SettingsToolbox(GLFWwindow* window) {
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 450");
+    ImGui_ImplOpenGL3_Init("#version 400");
     ImGui::StyleColorsDark();
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowRounding = 5.3f;
@@ -44,6 +44,7 @@ SettingsToolbox::SettingsToolbox(GLFWwindow* window) {
     colors[ImGuiCol_ButtonActive]           = ImVec4(0.50f, 0.31f, 0.50f, 1.00f);
 
     ImGui::SetNextWindowCollapsed(true);
+    ImGui::SetNextWindowCollapsed(true);
 }
 
 void SettingsToolbox::render() {
@@ -52,12 +53,16 @@ void SettingsToolbox::render() {
     ImGui::NewFrame();
     
     ImGui::SetNextWindowPos(ImVec2(10,10));
-    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize);                     
+    ImGui::Begin("Menu", NULL, ImGuiWindowFlags_AlwaysAutoResize);                     
 
     ImGui::Text("Framerate: %7.1f FPS", ImGui::GetIO().Framerate);
 
     if(ImGui::CollapsingHeader("Rendering")){
         ImGui::Indent(10.0f);
+
+        const char* APIs[] = {"OpenGL", "Close2GL" }; 
+        static int *currentAPI = reinterpret_cast<int*>(&Renderer::currentAPI);
+        ImGui::Combo("Rendering API", currentAPI, APIs, IM_ARRAYSIZE(APIs));
 
         const char* shadingMethods[] = { 
             "No Shading", 
@@ -95,7 +100,7 @@ void SettingsToolbox::render() {
     if(ImGui::CollapsingHeader("Camera")){
         ImGui::Indent(10.0f);
         ImGui::PushItemWidth(150);
-        ImGui::SliderFloat("Field Of View", &Settings::fieldOfView, 10.0f, 89.0f);
+        ImGui::SliderFloat("Field Of View", &Settings::verticalFieldOfView, 10.0f, 89.0f);
 
         if(ImGui::ArrowButton("left", 0)) Camera::moveLeft();
         ImGui::SameLine();
