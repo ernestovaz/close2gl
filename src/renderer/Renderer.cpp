@@ -156,12 +156,6 @@ void Renderer::render() {
             break;
 
     }
-
-    if(Settings::cullingEnabled) glEnable(GL_CULL_FACE);
-    else glDisable(GL_CULL_FACE);
-
-    if(Settings::reverseFaceOrientation) glFrontFace(GL_CW);
-    else glFrontFace(GL_CCW);
     
     if(currentAPI == RenderingAPI::OpenGL) openGLRender();
     else close2GLRender();
@@ -181,6 +175,12 @@ void Renderer::openGLRender() {
     glUniformMatrix4fv(openGLProjectionUniform,1,GL_FALSE, value_ptr(projection));
     glUniform3fv(openGLColorUniform, 1, value_ptr(Settings::renderingColor));
 
+    if(Settings::cullingEnabled) glEnable(GL_CULL_FACE);
+    else glDisable(GL_CULL_FACE);
+
+    if(Settings::reverseFaceOrientation) glFrontFace(GL_CW);
+    else glFrontFace(GL_CCW);
+
     glBindVertexArray(openGLVAO);
     glDrawElements(GL_TRIANGLES, Model::indices.size(), GL_UNSIGNED_INT, (void*)0);
 
@@ -191,6 +191,8 @@ void Renderer::close2GLRender() {
     glUseProgram(close2GLProgram);
     glUniform3fv(close2GLColorUniform, 1, value_ptr(Settings::renderingColor));
 
+    glDisable(GL_CULL_FACE); // culling should be done in Close2GL
+
     float FOVy = radians(Settings::verticalFieldOfView);
     float FOVx;
 
@@ -199,12 +201,12 @@ void Renderer::close2GLRender() {
         Settings::horizontalFieldOfView = degrees(FOVx);
     } else FOVx = radians(Settings::horizontalFieldOfView);
 
-    mat4 view  =        Close2GL::viewMatrix(
+    mat4 view  = Close2GL::viewMatrix(
             Camera::position,
             Camera::direction,
             Camera::up
     );
-    mat4 projection =   Close2GL::projectionMatrix(
+    mat4 projection = Close2GL::projectionMatrix(
             FOVx, FOVy, 
             Settings::nearPlane,
             Settings::farPlane
@@ -213,8 +215,22 @@ void Renderer::close2GLRender() {
     mat4 transformation = projection * view;
 
     vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
+    vector<unsigned int> indices = Close2GL::viewFrustumCulling(Model::indices, positions);
+
+    if (Settings::cullingEnabled) {
+        mat4 viewport = Close2GL::viewportMatrix(0, 0, Window::width, Window::height);
+        vector<vec3> screenPositions = Close2GL::transformPositions(positions, viewport);
+        indices = Close2GL::backfaceCulling(indices, screenPositions, Settings::reverseFaceOrientation);
+    }
 
     glBindVertexArray(close2GLVAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, close2GLEBO);
+    glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, 
+            indices.size() * sizeof(unsigned int), 
+            indices.data(), 
+            GL_STATIC_DRAW
+    );
     glBindBuffer(GL_ARRAY_BUFFER, close2GLVBO);
     glBufferSubData(
             GL_ARRAY_BUFFER, 0,

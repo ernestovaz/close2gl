@@ -45,12 +45,15 @@ void main(){
   world_position = view * model * vec4(vertex_position, 1.0);
   world_position /= world_position.w;
 
+  /*
   // normals should be translated inversely
-  world_normal   = inverse(transpose(model)) * vec4(vertex_normal, 1.0);
+  world_normal   = inverse(transpose(model)) * vec4(vertex_normal, 0.0);
   world_normal.w = 0.0; // w is discarded, vectors should have w = 0
+                        // */
+  world_normal = vec4(vertex_normal, 0.0);
 
   camera_position = inverse(view) * vec4(0.0, 0.0, 0.0, 1.0);
-  vertex_interpolated_color = shading_function(world_position, normalize(world_normal));
+  vertex_interpolated_color = shading_function(world_position, normalize(vec4(vertex_normal,0.0)));
 }
 
 subroutine(shading_mode) vec4 no_shading(vec4 position, vec4 normal) {
