@@ -8,6 +8,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "imgui/imgui_internal.h"
 
 #include "../renderer/Camera.h"
 #include "../renderer/Renderer.h"
@@ -57,11 +58,12 @@ void SettingsToolbox::render() {
 
     ImGui::Text("Framerate: %7.1f FPS", ImGui::GetIO().Framerate);
 
+    static int *currentAPI = reinterpret_cast<int*>(&Renderer::currentAPI);
+
     if(ImGui::CollapsingHeader("Rendering")){
         ImGui::Indent(10.0f);
 
         const char* APIs[] = {"OpenGL", "Close2GL" }; 
-        static int *currentAPI = reinterpret_cast<int*>(&Renderer::currentAPI);
         ImGui::Combo("Rendering API", currentAPI, APIs, IM_ARRAYSIZE(APIs));
 
         const char* shadingMethods[] = { 
@@ -69,8 +71,19 @@ void SettingsToolbox::render() {
             "Gouraud (Ambient + Diffuse)",
             "Gouraud (Ambient + Diffuse + Specular)"
         };
+
+        if(*currentAPI == 1) {
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+            Renderer::currentShadingMethod = 0;
+        }
         ImGui::Combo("Shading Method", &Renderer::currentShadingMethod, 
                 shadingMethods, IM_ARRAYSIZE(shadingMethods));
+        if(*currentAPI == 1) {
+            ImGui::PopItemFlag();
+            ImGui::PopStyleVar();
+        }
+
 
         ImGui::PushItemWidth(180);
         ImGui::ColorEdit3("Model Color", glm::value_ptr(Settings::renderingColor));
@@ -100,7 +113,19 @@ void SettingsToolbox::render() {
     if(ImGui::CollapsingHeader("Camera")){
         ImGui::Indent(10.0f);
         ImGui::PushItemWidth(150);
-        ImGui::SliderFloat("Field Of View", &Settings::verticalFieldOfView, 10.0f, 89.0f);
+        ImGui::SliderFloat("Vertical field Of View", &Settings::verticalFieldOfView, 1.0f, 179.0f);
+        if(*currentAPI == 1) {
+            ImGui::Checkbox("Asymmetric Field Of View", &Settings::fieldOfViewIsAsymmetric);
+            if(!Settings::fieldOfViewIsAsymmetric) {
+                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+            }
+            ImGui::SliderFloat("Horizontal Field Of View", &Settings::horizontalFieldOfView, 1.0f, 179.0f);
+            if(!Settings::fieldOfViewIsAsymmetric) {
+                ImGui::PopItemFlag();
+                ImGui::PopStyleVar();
+            }
+        }
 
         if(ImGui::ArrowButton("left", 0)) Camera::moveLeft();
         ImGui::SameLine();

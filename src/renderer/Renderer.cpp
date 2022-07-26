@@ -24,6 +24,7 @@ using glm::perspective;
 using glm::value_ptr;
 using glm::vec3;
 using glm::radians;
+using glm::degrees;
 
 int Renderer::currentShadingMethod = 0;
 RenderingAPI Renderer::currentAPI = RenderingAPI::Close2GL;
@@ -174,6 +175,7 @@ void Renderer::openGLRender() {
     mat4 view  =        openGLViewMatrix();
     mat4 projection =   openGLProjectionMatrix();
 
+
     glUniformMatrix4fv(openGLModelUniform,1,GL_FALSE, value_ptr(model));
     glUniformMatrix4fv(openGLViewUniform,1,GL_FALSE, value_ptr(view));
     glUniformMatrix4fv(openGLProjectionUniform,1,GL_FALSE, value_ptr(projection));
@@ -190,12 +192,16 @@ void Renderer::close2GLRender() {
     glUniform3fv(close2GLColorUniform, 1, value_ptr(Settings::renderingColor));
 
     float FOVy = radians(Settings::verticalFieldOfView);
-    float FOVx = 2.0f * atan(tan(FOVy/2.0f)/Window::height*Window::width);
+    float FOVx;
+
+    if (!Settings::fieldOfViewIsAsymmetric) {
+        FOVx = Close2GL::horizontalFieldOfView(FOVy, Window::width, Window::height);
+        Settings::horizontalFieldOfView = degrees(FOVx);
+    } else FOVx = radians(Settings::horizontalFieldOfView);
 
     mat4 view  =        openGLViewMatrix();
     mat4 projection =   Close2GL::projectionMatrix(
-            FOVx,
-            FOVy, 
+            FOVx, FOVy, 
             Settings::nearPlane,
             Settings::farPlane
     );
@@ -323,7 +329,7 @@ void Renderer::initializeOpenGLShadingSubroutines() {
 mat4 Renderer::openGLProjectionMatrix() {
     float aspectRatio = (float) Window::width / (float) Window::height;
     mat4 projectionMatrix = perspective(
-            radians(Settings::verticalFieldOfView), 
+            radians(Settings::verticalFieldOfView),
             aspectRatio, 
             Settings::nearPlane, 
             Settings::farPlane

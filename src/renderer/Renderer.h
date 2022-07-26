@@ -29,7 +29,6 @@ private:
     unsigned int openGLProgram;
     unsigned int close2GLProgram;
 
-
     unsigned int openGLVAO;
     unsigned int openGLEBO;
     unsigned int close2GLVAO;

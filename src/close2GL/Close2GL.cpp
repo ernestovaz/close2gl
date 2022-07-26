@@ -30,3 +30,7 @@ mat4 Close2GL::projectionMatrix(float FOVx, float FOVy, float nearPlane, float f
 
     return projection;
 }
+
+float Close2GL::horizontalFieldOfView(float FOVy, float screenWidth, float screenHeight) {
+    return 2.0f * atan(tan(FOVy/2.0f)/screenHeight*screenWidth);
+}

@@ -21,6 +21,7 @@ public:
     static vec3 backgroundColor;
     static float verticalFieldOfView;
     static float horizontalFieldOfView;
+    static bool fieldOfViewIsAsymmetric;
     static float nearPlane;
     static float farPlane;
     static bool cullingEnabled;
