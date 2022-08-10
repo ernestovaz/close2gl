@@ -9,7 +9,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Settings.h"
 #include "../application/Window.h"
 #include "../close2GL/Close2GL.h"
 
@@ -28,6 +27,17 @@ using glm::degrees;
 
 int Renderer::currentShadingMethod = 0;
 RenderingAPI Renderer::currentAPI = RenderingAPI::OpenGL;
+
+// Settings
+bool Renderer::fieldOfViewIsAsymmetric          = false;
+float Renderer::verticalFieldOfView             = DEFAULT_FIELD_OF_VIEW;
+float Renderer::horizontalFieldOfView           = DEFAULT_FIELD_OF_VIEW;
+float Renderer::farPlane                        = DEFAULT_FAR_PLANE;
+float Renderer::nearPlane                       = DEFAULT_NEAR_PLANE;
+int Renderer::reverseFaceOrientation            = DEFAULT_FACE_ORIENTATION_REVERSE;
+bool Renderer::cullingEnabled                   = DEFAULT_CULLING;
+vec3 Renderer::renderingColor                   = DEFAULT_RENDERING_COLOR;
+RenderingPrimitive Renderer::renderingPrimitive = DEFAULT_RENDERING_PRIMITIVE;
 
 Renderer::Renderer() {
     if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
@@ -144,7 +154,7 @@ void Renderer::render() {
     glClearColor(0.10f, 0.09f, 0.10f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    switch(Settings::renderingPrimitive){
+    switch(Renderer::renderingPrimitive){
         case RenderingPrimitive::TRIANGLES:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             break;
@@ -173,12 +183,12 @@ void Renderer::openGLRender() {
     glUniformMatrix4fv(openGLModelUniform,1,GL_FALSE, value_ptr(model));
     glUniformMatrix4fv(openGLViewUniform,1,GL_FALSE, value_ptr(view));
     glUniformMatrix4fv(openGLProjectionUniform,1,GL_FALSE, value_ptr(projection));
-    glUniform3fv(openGLColorUniform, 1, value_ptr(Settings::renderingColor));
+    glUniform3fv(openGLColorUniform, 1, value_ptr(Renderer::renderingColor));
 
-    if(Settings::cullingEnabled) glEnable(GL_CULL_FACE);
+    if(Renderer::cullingEnabled) glEnable(GL_CULL_FACE);
     else glDisable(GL_CULL_FACE);
 
-    if(Settings::reverseFaceOrientation) glFrontFace(GL_CW);
+    if(Renderer::reverseFaceOrientation) glFrontFace(GL_CW);
     else glFrontFace(GL_CCW);
 
     glBindVertexArray(openGLVAO);
@@ -189,17 +199,17 @@ void Renderer::openGLRender() {
 
 void Renderer::close2GLRender() {
     glUseProgram(close2GLProgram);
-    glUniform3fv(close2GLColorUniform, 1, value_ptr(Settings::renderingColor));
+    glUniform3fv(close2GLColorUniform, 1, value_ptr(Renderer::renderingColor));
 
     glDisable(GL_CULL_FACE); // culling should be done in Close2GL
 
-    float FOVy = radians(Settings::verticalFieldOfView);
+    float FOVy = radians(Renderer::verticalFieldOfView);
     float FOVx;
 
-    if (!Settings::fieldOfViewIsAsymmetric) {
+    if (!Renderer::fieldOfViewIsAsymmetric) {
         FOVx = Close2GL::horizontalFieldOfView(FOVy, Window::width, Window::height);
-        Settings::horizontalFieldOfView = degrees(FOVx);
-    } else FOVx = radians(Settings::horizontalFieldOfView);
+        Renderer::horizontalFieldOfView = degrees(FOVx);
+    } else FOVx = radians(Renderer::horizontalFieldOfView);
 
     mat4 view  = Close2GL::viewMatrix(
             Camera::position,
@@ -208,8 +218,8 @@ void Renderer::close2GLRender() {
     );
     mat4 projection = Close2GL::projectionMatrix(
             FOVx, FOVy, 
-            Settings::nearPlane,
-            Settings::farPlane
+            Renderer::nearPlane,
+            Renderer::farPlane
     );
     
     mat4 transformation = projection * view;
@@ -217,10 +227,10 @@ void Renderer::close2GLRender() {
     vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
     vector<unsigned int> indices = Close2GL::viewFrustumCulling(Model::indices, positions);
 
-    if (Settings::cullingEnabled) {
+    if (Renderer::cullingEnabled) {
         mat4 viewport = Close2GL::viewportMatrix(0, 0, Window::width, Window::height);
         vector<vec3> screenPositions = Close2GL::transformPositions(positions, viewport);
-        indices = Close2GL::backfaceCulling(indices, screenPositions, Settings::reverseFaceOrientation);
+        indices = Close2GL::backfaceCulling(indices, screenPositions, Renderer::reverseFaceOrientation);
     }
 
     glBindVertexArray(close2GLVAO);
@@ -349,10 +359,10 @@ void Renderer::initializeOpenGLShadingSubroutines() {
 mat4 Renderer::openGLProjectionMatrix() {
     float aspectRatio = (float) Window::width / (float) Window::height;
     mat4 projectionMatrix = perspective(
-            radians(Settings::verticalFieldOfView),
+            radians(Renderer::verticalFieldOfView),
             aspectRatio, 
-            Settings::nearPlane, 
-            Settings::farPlane
+            Renderer::nearPlane, 
+            Renderer::farPlane
     );
 
     return projectionMatrix;

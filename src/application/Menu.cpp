@@ -1,9 +1,7 @@
-#include "SettingsToolbox.h"
+#include "Menu.h"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
-
-#include "../renderer/Settings.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -14,7 +12,7 @@
 #include "../renderer/Renderer.h"
 
 
-SettingsToolbox::SettingsToolbox(GLFWwindow* window) {
+Menu::Menu(GLFWwindow* window) {
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 400");
@@ -48,7 +46,7 @@ SettingsToolbox::SettingsToolbox(GLFWwindow* window) {
     ImGui::SetNextWindowCollapsed(true);
 }
 
-void SettingsToolbox::render() {
+void Menu::render() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -88,26 +86,26 @@ void SettingsToolbox::render() {
 
 
         ImGui::PushItemWidth(180);
-        ImGui::ColorEdit3("Model Color", glm::value_ptr(Settings::renderingColor));
+        ImGui::ColorEdit3("Model Color", glm::value_ptr(Renderer::renderingColor));
 
         ImGui::PushItemWidth(90);
         const char* renderingPrimitives[] = { "Points", "Lines", "Triangles" };
         static int *currentPrimitive = reinterpret_cast<int*>(
-                &Settings::renderingPrimitive);
+                &Renderer::renderingPrimitive);
         ImGui::Combo("Rendering Primitive", currentPrimitive, 
                 renderingPrimitives, IM_ARRAYSIZE(renderingPrimitives));
 
-        ImGui::Checkbox("Backface Culling", &Settings::cullingEnabled);
+        ImGui::Checkbox("Backface Culling", &Renderer::cullingEnabled);
 
         ImGui::PushItemWidth(45);
-        static int* currentFaceOrientation = &Settings::reverseFaceOrientation;
+        static int* currentFaceOrientation = &Renderer::reverseFaceOrientation;
         ImGui::Combo("Triangle Face Orientation", currentFaceOrientation, "CCW\0CW\0");
 
         ImGui::PushItemWidth(60);
-        ImGui::DragFloat("Near Plane", &Settings::nearPlane, 0.05);
+        ImGui::DragFloat("Near Plane", &Renderer::nearPlane, 0.05);
         ImGui::SameLine();
         ImGui::PushItemWidth(60);
-        ImGui::DragFloat("Far Plane", &Settings::farPlane, 0.05);
+        ImGui::DragFloat("Far Plane", &Renderer::farPlane, 0.05);
 
         ImGui::Unindent(10.0f);
     }
@@ -115,15 +113,15 @@ void SettingsToolbox::render() {
     if(ImGui::CollapsingHeader("Camera")){
         ImGui::Indent(10.0f);
         ImGui::PushItemWidth(150);
-        ImGui::SliderFloat("Vertical field Of View", &Settings::verticalFieldOfView, 1.0f, 179.0f);
+        ImGui::SliderFloat("Vertical field Of View", &Renderer::verticalFieldOfView, 1.0f, 179.0f);
         if(*currentAPI == 1) {
-            ImGui::Checkbox("Asymmetric Field Of View", &Settings::fieldOfViewIsAsymmetric);
-            if(!Settings::fieldOfViewIsAsymmetric) {
+            ImGui::Checkbox("Asymmetric Field Of View", &Renderer::fieldOfViewIsAsymmetric);
+            if(!Renderer::fieldOfViewIsAsymmetric) {
                 ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
                 ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
             }
-            ImGui::SliderFloat("Horizontal Field Of View", &Settings::horizontalFieldOfView, 1.0f, 179.0f);
-            if(!Settings::fieldOfViewIsAsymmetric) {
+            ImGui::SliderFloat("Horizontal Field Of View", &Renderer::horizontalFieldOfView, 1.0f, 179.0f);
+            if(!Renderer::fieldOfViewIsAsymmetric) {
                 ImGui::PopItemFlag();
                 ImGui::PopStyleVar();
             }
@@ -171,13 +169,13 @@ void SettingsToolbox::render() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-SettingsToolbox::~SettingsToolbox() {
+Menu::~Menu() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-bool SettingsToolbox::isHandlingMouse() {
+bool Menu::isHandlingMouse() {
     return ImGui::GetIO().WantCaptureMouse;
 }
 

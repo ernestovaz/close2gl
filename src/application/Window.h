@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SettingsToolbox.h"
+#include "Menu.h"
 
 #include <GLFW/glfw3.h>
 
@@ -32,7 +32,7 @@ private:
 
     double lastFrameTime;
 
-    static SettingsToolbox* settingsToolbox;
+    static Menu* settingsToolbox;
     static bool hasMouseMoved;
     static bool exitKeyWasPressed;
     static bool cameraIsBeingMoved;

@@ -17,7 +17,7 @@ bool Window::hasMouseMoved = false;
 bool Window::exitKeyWasPressed = false;
 bool Window::cameraIsBeingMoved = false;
 
-SettingsToolbox* Window::settingsToolbox;
+Menu* Window::settingsToolbox;
 
 
 Window::Window() {
@@ -43,7 +43,7 @@ Window::Window() {
     glfwSetFramebufferSizeCallback(window, Window::windowSizeChangedCallback);
     glfwSetKeyCallback(window, Window::keyCallback);
 
-    this->settingsToolbox = new SettingsToolbox(window);
+    this->settingsToolbox = new Menu(window);
 }
 
 Window::~Window() {
