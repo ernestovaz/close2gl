@@ -66,34 +66,66 @@ void Renderer::initializeOpenGL() {
 }
 
 void Renderer::initializeClose2GL() {
+    unsigned int positionBuffer, textureBuffer;
     close2GLProgram = createClose2GLShaderProgram();
     close2GLColorUniform = glGetUniformLocation(close2GLProgram, "color");
 
     glGenVertexArrays(1, &close2GLVAO);
     glBindVertexArray(close2GLVAO);
 
-    glGenBuffers(1, &close2GLEBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, close2GLEBO);
-    glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, 
-            Model::indices.size() * sizeof(unsigned int), 
-            Model::indices.data(), 
-            GL_STATIC_DRAW
-    );
-
-    glGenBuffers(1, &close2GLVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, close2GLVBO);
-
-    // initialize with non-transformed positions, 
-    // transformation is done when rendering
+    glGenBuffers(1, &positionBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+    vector<vec2> positions = {
+        vec2(-1.0f, -1.0f),
+        vec2( 1.0f, -1.0f),
+        vec2( 1.0f,  1.0f),
+        vec2( 1.0f,  1.0f),
+        vec2(-1.0f,  1.0f),
+        vec2(-1.0f, -1.0f)
+    };
     glBufferData(
             GL_ARRAY_BUFFER, 
-            Model::positions.size() * sizeof(vec3), 
-            Model::positions.data(), 
+            positions.size() * sizeof(vec2), 
+            positions.data(), 
             GL_STATIC_DRAW
     );
-    glVertexAttribPointer(0,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
+    glVertexAttribPointer(0,2,GL_FLOAT, GL_FALSE, sizeof(vec2), 0);
     glEnableVertexAttribArray(0);
+
+    glGenBuffers(1, &textureBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, textureBuffer);
+    vector<vec2> textures = {
+        vec2(0.0f, 0.0f),
+        vec2(1.0f, 0.0f),
+        vec2(1.0f, 1.0f),
+        vec2(1.0f, 1.0f),
+        vec2(0.0f, 1.0f),
+        vec2(0.0f, 0.0f)
+    };
+    glBufferData(
+            GL_ARRAY_BUFFER, 
+            textures.size() * sizeof(vec2), 
+            textures.data(), 
+            GL_STATIC_DRAW
+    );
+    glVertexAttribPointer(1,2,GL_FLOAT, GL_FALSE, sizeof(vec2), 0);
+    glEnableVertexAttribArray(1);
+    
+    unsigned char *colors = new unsigned char[1920 * 1080 * 3];  
+    for (int i = 0; i < 1920 * 1080 * 3; i++) {
+        colors[i] = (unsigned char) 255;
+    }
+    colorBuffer = colors;
+
+    std::cout << glGetError() << std::endl;
+    glGenTextures(1, &close2GLTexture);
+    std::cout << glGetError() << std::endl;
+    glBindTexture(GL_TEXTURE_2D, close2GLTexture);
+    std::cout << glGetError() << std::endl;
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, 1920, 1080);
+    std::cout << glGetError() << std::endl;
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1920, 1080, GL_RGB, GL_UNSIGNED_BYTE, colorBuffer);
+    std::cout << glGetError() << std::endl;
 
     glBindVertexArray(0);
 }
@@ -207,6 +239,7 @@ void Renderer::close2GLRender() {
     float FOVx;
 
     if (!Renderer::fieldOfViewIsAsymmetric) {
+        //manually calculate horizontal field of view for simmetry
         FOVx = Close2GL::horizontalFieldOfView(FOVy, Window::width, Window::height);
         Renderer::horizontalFieldOfView = degrees(FOVx);
     } else FOVx = radians(Renderer::horizontalFieldOfView);
@@ -233,21 +266,10 @@ void Renderer::close2GLRender() {
         indices = Close2GL::backfaceCulling(indices, screenPositions, Renderer::reverseFaceOrientation);
     }
 
+    glClear(GL_COLOR_BUFFER_BIT);
     glBindVertexArray(close2GLVAO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, close2GLEBO);
-    glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, 
-            indices.size() * sizeof(unsigned int), 
-            indices.data(), 
-            GL_STATIC_DRAW
-    );
-    glBindBuffer(GL_ARRAY_BUFFER, close2GLVBO);
-    glBufferSubData(
-            GL_ARRAY_BUFFER, 0,
-            positions.size() * sizeof(vec3),
-            positions.data());
-
-    glDrawElements(GL_TRIANGLES, Model::indices.size(), GL_UNSIGNED_INT, (void*)0);
+    glBindTexture(GL_TEXTURE_2D, close2GLTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
 

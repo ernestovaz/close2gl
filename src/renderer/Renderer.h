@@ -54,8 +54,9 @@ private:
     unsigned int openGLVAO;
     unsigned int openGLEBO;
     unsigned int close2GLVAO;
-    unsigned int close2GLEBO;
-    unsigned int close2GLVBO;
+    unsigned int close2GLTexture;
+    
+    unsigned char* colorBuffer;
 
     int openGLModelUniform;
     int openGLViewUniform;
