@@ -8,6 +8,7 @@
 
 #include "ShadingMethod.h"
 #include "Model.h"
+#include "../close2GL/ColorBuffer.h"
 
 using std::string;
 using glm::mat4;
@@ -21,11 +22,12 @@ enum class RenderingAPI { OpenGL, Close2GL };
 // Default settings values
 #define DEFAULT_RENDERING_PRIMITIVE         RenderingPrimitive::TRIANGLES
 #define DEFAULT_RENDERING_COLOR             vec3(0.340f, 0.514f, 0.877f)
-#define DEFAULT_FIELD_OF_VIEW      45
+#define DEFAULT_FIELD_OF_VIEW               45
 #define DEFAULT_NEAR_PLANE                  0.01f
 #define DEFAULT_FAR_PLANE                   200.0f
 #define DEFAULT_FACE_ORIENTATION_REVERSE    false
 #define DEFAULT_CULLING                     false
+#define BACKGROUND_COLOR                    vec3(0.10f, 0.09f, 0.10f) 
 
 class Renderer {
 public:
@@ -56,7 +58,7 @@ private:
     unsigned int close2GLVAO;
     unsigned int close2GLTexture;
     
-    unsigned char* colorBuffer;
+    ColorBuffer colorBuffer;
 
     int openGLModelUniform;
     int openGLViewUniform;
@@ -66,24 +68,22 @@ private:
 
     int close2GLColorUniform;
 
+    unsigned int createOpenGLShaderProgram();
+    unsigned int createOpenGLVAO();
+    void initializeOpenGLShadingSubroutines();
+    void initializeOpenGL();
+    mat4 openGLProjectionMatrix();
+    mat4 openGLViewMatrix();
+    void openGLResize();
     void openGLRender();
+
+    unsigned int createClose2GLShaderProgram();
+    void initializeClose2GL();
+    void close2GLResize();
     void close2GLRender();
 
-    unsigned int createOpenGLShaderProgram();
-    unsigned int createClose2GLShaderProgram();
     void linkShaderProgram(unsigned int);
     unsigned int createShaderProgram(unsigned int, unsigned int);
     unsigned int loadShader(string, unsigned int);
-
-    void initializeOpenGL();
-    void initializeClose2GL();
-
-    unsigned int createOpenGLVAO();
-    void updateClose2GLVAO();
-
-    void initializeOpenGLShadingSubroutines();
-
     void setShadingMethod(ShadingMethod);
-    mat4 openGLProjectionMatrix();
-    mat4 openGLViewMatrix();
 };

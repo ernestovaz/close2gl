@@ -112,7 +112,7 @@ mat4 Close2GL::viewportMatrix(int left, int top, int right, int bottom) {
     viewport[2][2] = 1;
     viewport[3][3] = 1;
 
-    // Translation
+// Translation
     viewport[3][0] = (right + left)/2.0f;
     viewport[3][1] = (top + bottom)/2.0f;
     
@@ -121,4 +121,13 @@ mat4 Close2GL::viewportMatrix(int left, int top, int right, int bottom) {
 
 float Close2GL::horizontalFieldOfView(float FOVy, float screenWidth, float screenHeight) {
     return 2.0f * atan(tan(FOVy/2.0f)/screenHeight*screenWidth);
+}
+
+unsigned char* createColorBuffer(int width, int height) {
+   unsigned char* buffer = new unsigned char[width * height * 3]; 
+   return buffer;
+}
+
+void clearColorBuffer(unsigned char* buffer, vec3 color) {
+    
 }

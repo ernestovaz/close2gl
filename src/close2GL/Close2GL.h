@@ -20,5 +20,6 @@ namespace Close2GL {
     mat4 viewMatrix(vec3 cameraPosition, vec3 cameraDirection, vec3 cameraUp);
     mat4 viewportMatrix(int left, int top, int right, int bottom);
     float horizontalFieldOfView(float FOVy, float screenWidth, float screenHeight);
+    unsigned char* createColorBuffer(int width, int height);
+    void clearColorBuffer(unsigned char* buffer, vec3 color);
 }
-

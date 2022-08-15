@@ -15,9 +15,9 @@ out vec4 world_normal;
 out vec4 vertex_interpolated_color;
 out vec4 camera_position;
 
-#define DIFFUSE_REFLECTANCE     vec3(0.9, 0.9, 0.9)
-#define AMBIENT_REFLECTANCE     vec3(0.3, 0.3, 0.3)
-#define SPECULAR_REFLECTANCE    vec3(1.5, 1.5, 1.5)
+#define DIFFUSE_REFLECTANCE     vec3(1.0, 1.0, 1.0)
+#define AMBIENT_REFLECTANCE     vec3(1.0, 1.0, 1.0)
+#define SPECULAR_REFLECTANCE    vec3(1.0, 1.0, 1.0)
 #define LIGHT_SOURCE_COLOR      vec3(1.0, 1.0, 1.0)
 #define AMBIENT_LIGHT_COLOR     vec3(0.1, 0.1, 0.1)
 #define LIGHT_SOURCE_DIRECTION  vec4(0.0, 1.0, 0.0, 0.0)
@@ -94,7 +94,7 @@ subroutine(shading_mode) vec4 ambient_diffuse_specular_shading(vec4 position, ve
       LIGHT_SOURCE_COLOR,
       r,
       v,
-      80.0
+      4.0
   );
 
   return vec4(shaded_color, 1.0);
