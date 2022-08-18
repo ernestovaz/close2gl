@@ -11,8 +11,10 @@ public:
     ~ColorBuffer();
     
     vec3 get(int x, int y);
-    void set(int x, int y, vec3 color);
+    void setColor(int x, int y, vec3 color);
     void resize(int x, int y);
+    void clear(vec3 color);
+
     unsigned char* data();
 
     int width;

@@ -111,23 +111,17 @@ void Renderer::initializeClose2GL() {
     glVertexAttribPointer(1,2,GL_FLOAT, GL_FALSE, sizeof(vec2), 0);
     glEnableVertexAttribArray(1);
     
-    unsigned char *colors = new unsigned char[1920 * 1080 * 3];  
-    for (int i = 0; i < 1920 * 1080 * 3; i++) {
-        colors[i] = (unsigned char) 255;
-    }
-    colorBuffer = colors;
-
-    std::cout << glGetError() << std::endl;
-    glGenTextures(1, &close2GLTexture);
-    std::cout << glGetError() << std::endl;
-    glBindTexture(GL_TEXTURE_2D, close2GLTexture);
-    std::cout << glGetError() << std::endl;
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, 1920, 1080);
-    std::cout << glGetError() << std::endl;
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1920, 1080, GL_RGB, GL_UNSIGNED_BYTE, colorBuffer);
-    std::cout << glGetError() << std::endl;
+    close2GLResize();
 
     glBindVertexArray(0);
+}
+
+void Renderer::close2GLResize() {
+    colorBuffer.resize(Window::width, Window::height); 
+    glDeleteTextures(1, &close2GLTexture);
+    glGenTextures(1, &close2GLTexture);
+    glBindTexture(GL_TEXTURE_2D, close2GLTexture);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, Window::width, Window::height);
 }
 
 unsigned int Renderer::createOpenGLVAO() {
@@ -181,9 +175,10 @@ void Renderer::render() {
     if (Window::hasSizeChanged) {
         glViewport(0, 0, Window::width, Window::height);
         Window::hasSizeChanged = false;
+        close2GLResize();
     }
 
-    glClearColor(0.10f, 0.09f, 0.10f, 1.0f);
+    glClearColor(BACKGROUND_COLOR.x, BACKGROUND_COLOR.y, BACKGROUND_COLOR.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     switch(Renderer::renderingPrimitive){
@@ -231,8 +226,6 @@ void Renderer::openGLRender() {
 
 void Renderer::close2GLRender() {
     glUseProgram(close2GLProgram);
-    glUniform3fv(close2GLColorUniform, 1, value_ptr(Renderer::renderingColor));
-
     glDisable(GL_CULL_FACE); // culling should be done in Close2GL
 
     float FOVy = radians(Renderer::verticalFieldOfView);
@@ -257,18 +250,23 @@ void Renderer::close2GLRender() {
     
     mat4 transformation = projection * view;
 
-    vector<vec3> positions = Close2GL::transformPositions(Model::positions, transformation);
+    vector<vec3> positions = Close2GL::transformAndPerspectiveDivide(Model::positions, transformation);
     vector<unsigned int> indices = Close2GL::viewFrustumCulling(Model::indices, positions);
+    mat4 viewport = Close2GL::viewportMatrix(0, 0, Window::width, Window::height);
+    positions = Close2GL::transform(positions, viewport);
 
     if (Renderer::cullingEnabled) {
-        mat4 viewport = Close2GL::viewportMatrix(0, 0, Window::width, Window::height);
-        vector<vec3> screenPositions = Close2GL::transformPositions(positions, viewport);
-        indices = Close2GL::backfaceCulling(indices, screenPositions, Renderer::reverseFaceOrientation);
+        indices = Close2GL::backfaceCulling(indices, positions, Renderer::reverseFaceOrientation);
     }
+    
+    colorBuffer.clear(BACKGROUND_COLOR * 255.0f);
+    Close2GL::rasterizeNoShading(colorBuffer, renderingColor * 255.0f, indices, positions);
 
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindVertexArray(close2GLVAO);
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Window::width, Window::height, GL_RGB, GL_UNSIGNED_BYTE, colorBuffer.data());
+
+    glBindVertexArray(close2GLVAO);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }

@@ -1,6 +1,11 @@
 #include "Close2GL.h"
 
-vector<vec3> Close2GL::transformPositions(vector<vec3> positions, mat4 modelViewProjection) {
+#include <algorithm>
+#include <iostream>
+
+using std::sort;
+
+vector<vec3> Close2GL::transformAndPerspectiveDivide(vector<vec3> positions, mat4 modelViewProjection) {
     int vertexCount = positions.size();
     vector<vec3> transformedVector(vertexCount);
     for (int i = 0; i < vertexCount; i++) {
@@ -10,6 +15,16 @@ vector<vec3> Close2GL::transformPositions(vector<vec3> positions, mat4 modelView
         newPosition.y /= newPosition.w;
         newPosition.z /= newPosition.w;
         transformedVector[i] = newPosition;
+    }
+    return transformedVector;
+}
+
+vector<vec3> Close2GL::transform(vector<vec3> positions, mat4 transformation) {
+    int vertexCount = positions.size();
+    vector<vec3> transformedVector(vertexCount);
+    for (int i = 0; i < vertexCount; i++) {
+        vec4 newPosition(positions[i], 1.0f);
+        transformedVector[i] = transformation * newPosition;
     }
     return transformedVector;
 }
@@ -108,13 +123,13 @@ mat4 Close2GL::viewportMatrix(int left, int top, int right, int bottom) {
     
     // Scaling
     viewport[0][0] = (right - left)/2.0f;
-    viewport[1][1] = (top - bottom)/2.0f;   // negative value, flips mapping
+    viewport[1][1] = (bottom - top)/2.0f;   // negative value, flips mapping
     viewport[2][2] = 1;
     viewport[3][3] = 1;
 
 // Translation
     viewport[3][0] = (right + left)/2.0f;
-    viewport[3][1] = (top + bottom)/2.0f;
+    viewport[3][1] = (bottom + top)/2.0f;
     
     return viewport;
 }
@@ -123,11 +138,145 @@ float Close2GL::horizontalFieldOfView(float FOVy, float screenWidth, float scree
     return 2.0f * atan(tan(FOVy/2.0f)/screenHeight*screenWidth);
 }
 
-unsigned char* createColorBuffer(int width, int height) {
-   unsigned char* buffer = new unsigned char[width * height * 3]; 
-   return buffer;
+void rasterizeActiveEdges(ColorBuffer& buffer, vec3 color, float activeEdges[], float increments[], float scanlineStart, float scanlineEnd) {
+    for (float y = scanlineStart; y > scanlineEnd; y--) {
+        for (float x = activeEdges[0]; x <= activeEdges[1]; x++) {
+            buffer.setColor(x, y, color);
+        }
+        if(y > scanlineEnd + 1) {
+            activeEdges[0] += increments[0]; 
+            activeEdges[1] += increments[1]; 
+        }
+    }
 }
 
-void clearColorBuffer(unsigned char* buffer, vec3 color) {
+void rasterizeTopStraightTriangle(ColorBuffer& buffer, vec3 color, vector<vec3> sortedVertices) {
+    float activeEdges[2];
+    float increments[2] = {0};
+
+    // sort active vertices by X, ascending order
+    vector<vec3> activeVertices({sortedVertices[0], sortedVertices[1]});
+    sort(activeVertices.begin(), activeVertices.end(), [](vec3 a, vec3 b) {
+        return a.x < b.x;
+    });
+    for(int i=0; i <= 1; i++){
+        activeEdges[i] = activeVertices[i].x;
+        float dX = activeVertices[i].x - sortedVertices[2].x;
+        float dY = activeVertices[i].y - sortedVertices[2].y;
+        if(dY != 0) increments[i] = -dX/dY;
+        //TODO: calculate Z
+    }
+
+    rasterizeActiveEdges(buffer, color, activeEdges, increments, sortedVertices[0].y, sortedVertices[2].y);
+}
+
+void rasterizeBottomStraightTriangle(ColorBuffer& buffer, vec3 color, vector<vec3> sortedVertices) {
+    float activeEdges[2];
+    float increments[2] = {0};
+
+    // sort active vertices by X, ascending order
+    vector<vec3> activeVertices({sortedVertices[1], sortedVertices[2]});
+    sort(activeVertices.begin(), activeVertices.end(), [](vec3 a, vec3 b) {
+        return a.x < b.x;
+    });
+    for(int i=0; i <= 1; i++){
+        activeEdges[i] = sortedVertices[0].x;
+        float dX = activeVertices[i].x - sortedVertices[0].x;
+        float dY = activeVertices[i].y - sortedVertices[0].y;
+        if(dY != 0) increments[i] = -dX/dY;
+        //TODO: calculate Z
+    }
+
+    rasterizeActiveEdges(buffer, color, activeEdges, increments, sortedVertices[0].y, sortedVertices[2].y);
+}
+
+void rasterizeGenericTriangle(ColorBuffer& buffer, vec3 color, vector<vec3> sortedVertices) {
+    float activeEdges[2];
+    float increments[2] = {0};
+
+    // sort active vertices by X, ascending order
+    vector<vec3> activeVertices({sortedVertices[0], sortedVertices[1]});
+    sort(activeVertices.begin(), activeVertices.end(), [](vec3 a, vec3 b) {
+        return a.x < b.x;
+    });
+    for(int i=0; i <= 1; i++){
+        activeEdges[i] = sortedVertices[0].x;
+        int dX, dY;
+        if(activeVertices[i] == sortedVertices[0]){
+            dX = sortedVertices[2].x - sortedVertices[0].x;
+            dY = sortedVertices[2].y - sortedVertices[0].y;
+        } else {
+            dX = sortedVertices[1].x - sortedVertices[0].x;
+            dY = sortedVertices[1].y - sortedVertices[0].y;
+            std::cout << dY << std::endl;
+        }
+        if(dY != 0) increments[i] = -(float)dX/(float)dY;
+        //TODO: calculate Z
+    }
+    rasterizeActiveEdges(buffer, color, activeEdges, increments, sortedVertices[0].y, sortedVertices[1].y);
+    for(int i=0; i <= 1; i++){
+        float dX = activeVertices[i].x - sortedVertices[2].x;
+        float dY = activeVertices[i].y - sortedVertices[2].y;
+        if(dY != 0) increments[i] = -dX/dY;
+        //TODO: calculate Z
+    }
+
+    rasterizeActiveEdges(buffer, color, activeEdges, increments, sortedVertices[1].y, sortedVertices[2].y);
+}
+
+void rasterizeGenericTriangleNew(ColorBuffer& buffer, vec3 color, vector<vec3> sortedVertices) {
+    float activeEdges[2];
+    float increments[2] = {0};
     
+    // sort active vertices by X, ascending order
+    vector<vec3> activeVertices({sortedVertices[1], sortedVertices[2]});
+    sort(activeVertices.begin(), activeVertices.end(), [](vec3 a, vec3 b) {
+        return a.x < b.x;
+    });
+
+    for(int i=0; i <= 1; i++){
+        activeEdges[i] = sortedVertices[0].x;
+        float dX = activeVertices[i].x - sortedVertices[0].x;
+        float dY = activeVertices[i].y - sortedVertices[0].y;
+        if(dY != 0) increments[i] = -dX/dY;
+        //TODO: calculate Z
+    }
+    rasterizeActiveEdges(buffer, color, activeEdges, increments, sortedVertices[0].y, sortedVertices[1].y);
+
+    float dX = activeVertices[0].x - sortedVertices[2].x;
+    float dY = activeVertices[0].y - sortedVertices[2].y;
+    if(dY != 0) increments[0] = -dX/dY;
+
+    rasterizeActiveEdges(buffer, color, activeEdges, increments, sortedVertices[1].y, sortedVertices[2].y);
+}
+
+
+void rasterizeTriangle(ColorBuffer& buffer, vec3 color, vector<vec3> vertices) {
+    // sort vertices by Y, descending order
+    vector<vec3> sortedVertices(vertices);
+    sort(sortedVertices.begin(), sortedVertices.end(), [](vec3 a, vec3 b) {
+        return a.y > b.y;
+    });
+
+    float scanlineStart, scanlineEnd;
+    if(sortedVertices[1].y == sortedVertices[0].y) {
+        rasterizeTopStraightTriangle(buffer, color, sortedVertices);
+    } else if (sortedVertices[1].y == sortedVertices[2].y) {
+        rasterizeBottomStraightTriangle(buffer, color, sortedVertices);
+    } else {
+        rasterizeGenericTriangleNew(buffer, color, sortedVertices);
+    }
+}
+
+void Close2GL::rasterizeNoShading(ColorBuffer& buffer, vec3 color, vector<unsigned int> indices, vector<vec3> positions) {
+    int indexCount = indices.size();
+    for (int i=0; i+2 < indexCount; i+=3) {
+        vector<vec3> vertices = {
+            positions[indices[i]],
+            positions[indices[i+1]],
+            positions[indices[i+2]]
+        };
+
+        rasterizeTriangle(buffer, color, vertices);
+    }
 }

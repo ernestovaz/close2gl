@@ -24,10 +24,23 @@ vec3 ColorBuffer::get(int x, int y) {
     return color;
 }
 
-void ColorBuffer::set(int x, int y, vec3 color) {
-    buffer [(width * y + x) * 3]      = (unsigned char) color.x;
-    buffer [(width * y + x) * 3 + 1]  = (unsigned char) color.y;
-    buffer [(width * y + x) * 3 + 2]  = (unsigned char) color.z;
+void ColorBuffer::setColor(int x, int y, vec3 color) {
+    int position = (width * y + x) * 3;
+    buffer [position    ]  = (unsigned char) color.x;
+    buffer [position + 1]  = (unsigned char) color.y;
+    buffer [position + 2]  = (unsigned char) color.z;
+}
+
+void ColorBuffer::clear(vec3 color) {
+    unsigned char colorR = color.x;
+    unsigned char colorG = color.y;
+    unsigned char colorB = color.z;
+    
+    for(int i = 0; i+3 < width*height*3; i+=3) {
+        buffer[i] =     colorR;
+        buffer[i+1] =   colorG;
+        buffer[i+2] =   colorB;
+    }
 }
 
 void ColorBuffer::resize(int width, int height) {
