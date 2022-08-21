@@ -26,7 +26,7 @@ using glm::radians;
 using glm::degrees;
 
 int Renderer::currentShadingMethod = 0;
-RenderingAPI Renderer::currentAPI = RenderingAPI::OpenGL;
+RenderingAPI Renderer::currentAPI = RenderingAPI::OpenGL_API;
 
 // Settings
 bool Renderer::fieldOfViewIsAsymmetric          = false;
@@ -181,24 +181,26 @@ void Renderer::render() {
     glClearColor(BACKGROUND_COLOR.x, BACKGROUND_COLOR.y, BACKGROUND_COLOR.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    switch(Renderer::renderingPrimitive){
-        case RenderingPrimitive::TRIANGLES:
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            break;
-        case RenderingPrimitive::LINES:
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            break;
-        case RenderingPrimitive::POINTS:
-            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-            break;
-
-    }
     
-    if(currentAPI == RenderingAPI::OpenGL) openGLRender();
+    if(currentAPI == RenderingAPI::OpenGL_API) openGLRender();
     else close2GLRender();
 }
 
 void Renderer::openGLRender() {
+
+    switch(Renderer::renderingPrimitive){
+        case RenderingPrimitive::TRIANGLES_PRIMITIVE:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            break;
+        case RenderingPrimitive::LINES_PRIMITIVE:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            break;
+        case RenderingPrimitive::POINTS_PRIMITIVE:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+            break;
+
+    }
+
     glUseProgram(openGLProgram);
     setShadingMethod(ShadingMethod::methods.at(currentShadingMethod)); 
 
@@ -227,6 +229,7 @@ void Renderer::openGLRender() {
 void Renderer::close2GLRender() {
     glUseProgram(close2GLProgram);
     glDisable(GL_CULL_FACE); // culling should be done in Close2GL
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     float FOVy = radians(Renderer::verticalFieldOfView);
     float FOVx;
@@ -260,7 +263,7 @@ void Renderer::close2GLRender() {
     }
     
     colorBuffer.clear(BACKGROUND_COLOR * 255.0f);
-    Close2GL::rasterizeNoShading(colorBuffer, renderingColor * 255.0f, indices, positions);
+    Close2GL::rasterizeNoShading(colorBuffer, renderingColor * 255.0f, indices, positions, (int) renderingPrimitive);
 
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Window::width, Window::height, GL_RGB, GL_UNSIGNED_BYTE, colorBuffer.data());

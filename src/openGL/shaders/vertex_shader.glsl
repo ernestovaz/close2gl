@@ -39,7 +39,6 @@ vec3 specular_shading(vec3 ks, vec3 I, vec4 r, vec4 v, float q) {
 
 
 void main(){
-  gl_PointSize = 5.0;
   gl_Position = projection * view * model * vec4(vertex_position, 1.0);
   
   world_position = view * model * vec4(vertex_position, 1.0);

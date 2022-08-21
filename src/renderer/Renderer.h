@@ -16,11 +16,18 @@ using glm::mat4;
 #define OPENGL_SHADER_LOCATION "../src/openGL/shaders/"
 #define CLOSE2GL_SHADER_LOCATION "../src/close2GL/shaders/"
 
-enum class RenderingPrimitive { POINTS, LINES, TRIANGLES };
-enum class RenderingAPI { OpenGL, Close2GL };
+enum RenderingPrimitive { 
+    POINTS_PRIMITIVE    = 0, 
+    LINES_PRIMITIVE     = 1, 
+    TRIANGLES_PRIMITIVE = 2 
+};
+enum RenderingAPI { 
+    OpenGL_API  = 0, 
+    Close2GL_API= 1 
+};
 
-// Default settings values
-#define DEFAULT_RENDERING_PRIMITIVE         RenderingPrimitive::TRIANGLES
+// Default setting values
+#define DEFAULT_RENDERING_PRIMITIVE         RenderingPrimitive::TRIANGLES_PRIMITIVE
 #define DEFAULT_RENDERING_COLOR             vec3(0.340f, 0.514f, 0.877f)
 #define DEFAULT_FIELD_OF_VIEW               45
 #define DEFAULT_NEAR_PLANE                  0.01f

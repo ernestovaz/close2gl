@@ -84,7 +84,6 @@ void Menu::render() {
             ImGui::PopStyleVar();
         }
 
-
         ImGui::PushItemWidth(180);
         ImGui::ColorEdit3("Model Color", glm::value_ptr(Renderer::renderingColor));
 

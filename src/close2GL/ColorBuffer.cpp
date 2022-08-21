@@ -13,7 +13,7 @@ ColorBuffer::ColorBuffer(int width, int height) {
 }
 
 ColorBuffer::~ColorBuffer() {
-    delete [] buffer;
+    if (buffer != NULL) delete [] buffer;
 }
 
 vec3 ColorBuffer::get(int x, int y) {
