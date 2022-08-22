@@ -77,7 +77,7 @@ subroutine(shading_mode) vec4 ambient_diffuse_shading(vec4 position, vec4 normal
 subroutine(shading_mode) vec4 ambient_diffuse_specular_shading(vec4 position, vec4 normal) {
   vec3 shaded_color = vec3(0.0);
   shaded_color += diffuse_shading(
-      color, 
+      DIFFUSE_REFLECTANCE, 
       LIGHT_SOURCE_COLOR, 
       normal, 
       LIGHT_SOURCE_DIRECTION
@@ -96,5 +96,5 @@ subroutine(shading_mode) vec4 ambient_diffuse_specular_shading(vec4 position, ve
       4.0
   );
 
-  return vec4(shaded_color, 1.0);
+  return vec4(shaded_color * color, 1.0);
 }

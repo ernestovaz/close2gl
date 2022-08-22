@@ -118,6 +118,7 @@ void Renderer::initializeClose2GL() {
 
 void Renderer::close2GLResize() {
     colorBuffer.resize(Window::width, Window::height); 
+    depthBuffer.resize(Window::width, Window::height);
     glDeleteTextures(1, &close2GLTexture);
     glGenTextures(1, &close2GLTexture);
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
@@ -251,9 +252,8 @@ void Renderer::close2GLRender() {
             Renderer::farPlane
     );
     
-    mat4 transformation = projection * view;
-
-    vector<vec3> positions = Close2GL::transformAndPerspectiveDivide(Model::positions, transformation);
+    vector<vec3> cameraPositions = Close2GL::transform(Model::positions, view);
+    vector<vec3> positions = Close2GL::transformAndPerspectiveDivide(cameraPositions, projection);
     vector<unsigned int> indices = Close2GL::viewFrustumCulling(Model::indices, positions);
     mat4 viewport = Close2GL::viewportMatrix(0, 0, Window::width, Window::height);
     positions = Close2GL::transform(positions, viewport);
@@ -263,7 +263,14 @@ void Renderer::close2GLRender() {
     }
     
     colorBuffer.clear(BACKGROUND_COLOR * 255.0f);
-    Close2GL::rasterizeNoShading(colorBuffer, renderingColor * 255.0f, indices, positions, (int) renderingPrimitive);
+    depthBuffer.clear();
+    if(currentShadingMethod == 0) {
+        Close2GL::rasterize(colorBuffer, renderingColor, indices, positions, (int)renderingPrimitive);
+    } else {
+        vector<vec3> normals = Model::normals;
+        Shader shader(Camera::position, vec3(1.0f), renderingColor);
+        Close2GL::rasterize(colorBuffer, depthBuffer, indices, positions, cameraPositions, normals, (int)renderingPrimitive, shader);
+    }
 
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Window::width, Window::height, GL_RGB, GL_UNSIGNED_BYTE, colorBuffer.data());

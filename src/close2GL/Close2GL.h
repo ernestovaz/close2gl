@@ -5,6 +5,9 @@
 #include <glm/glm.hpp>
 
 #include "ColorBuffer.h"
+#include "DepthBuffer.h"
+
+#include "Shader.h"
 
 using std::vector;
 
@@ -14,10 +17,14 @@ using glm::vec4;
 using glm::mat4;
 
 namespace Close2GL {
+
     const int POINTS = 0;
     const int LINES = 1;
     const int TRIANGLES = 2;
-
+    
+    const int NO_SHADING = 0;
+    const int GOURAUD_SHADING = 1;
+    
     vector<vec3> transformAndPerspectiveDivide(vector<vec3> positions, mat4 transformation);
     vector<vec3> transform(vector<vec3> positions, mat4 transformation);
     vector<unsigned int> viewFrustumCulling(vector<unsigned int> indices, vector<vec3> positions);
@@ -28,5 +35,22 @@ namespace Close2GL {
     mat4 viewportMatrix(int left, int top, int right, int bottom);
     float horizontalFieldOfView(float FOVy, float screenWidth, float screenHeight);
 
-    void rasterizeNoShading(ColorBuffer& buffer, vec3 color, vector<unsigned int> indices, vector<vec3> positions, int renderingMode);
+    void rasterize(
+        ColorBuffer& colorBuffer, 
+        DepthBuffer& depthBuffer,
+        vector<unsigned int> indices, 
+        vector<vec3> positions, 
+        vector<vec3> cameraPositions,
+        vector<vec3> normals, 
+        int primitive, 
+        Shader shader
+    );
+
+    void rasterize(
+        ColorBuffer& buffer, 
+        vec3 color, 
+        vector<unsigned int> indices, 
+        vector<vec3> positions, 
+        int primitive
+    );
 }

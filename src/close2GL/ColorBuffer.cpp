@@ -4,7 +4,7 @@ ColorBuffer::ColorBuffer() {
     width = 0;
     height = 0;
     buffer = NULL;
-};
+}
 
 ColorBuffer::ColorBuffer(int width, int height) {
     this->width = width;

@@ -71,18 +71,22 @@ void Menu::render() {
             "Phong (Ambient + Diffuse + Specular)"
         };
 
+        /*
         if(*currentAPI == 1) {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
             ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
             Renderer::currentShadingMethod = 0;
         }
+        */
         ImGui::PushItemWidth(180);
         ImGui::Combo("Shading Method", &Renderer::currentShadingMethod, 
                 shadingMethods, IM_ARRAYSIZE(shadingMethods));
+        /*
         if(*currentAPI == 1) {
             ImGui::PopItemFlag();
             ImGui::PopStyleVar();
         }
+        */
 
         ImGui::PushItemWidth(180);
         ImGui::ColorEdit3("Model Color", glm::value_ptr(Renderer::renderingColor));

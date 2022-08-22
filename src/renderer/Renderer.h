@@ -9,6 +9,7 @@
 #include "ShadingMethod.h"
 #include "Model.h"
 #include "../close2GL/ColorBuffer.h"
+#include "../close2GL/DepthBuffer.h"
 
 using std::string;
 using glm::mat4;
@@ -66,6 +67,7 @@ private:
     unsigned int close2GLTexture;
     
     ColorBuffer colorBuffer;
+    DepthBuffer depthBuffer;
 
     int openGLModelUniform;
     int openGLViewUniform;

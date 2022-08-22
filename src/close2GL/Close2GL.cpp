@@ -74,7 +74,7 @@ vector<unsigned int> Close2GL::backfaceCulling(vector<unsigned int> indices, vec
 
         float a = (pair1 + pair2 + pair3)/2.0f;
 
-        if (((a > 0) && !isCW) || ((a < 0) && isCW)) {
+        if (((a > 0) && isCW) || ((a < 0) && !isCW)) {
 
             indices.erase(indices.begin()+i, indices.begin()+i+3);
             i-=3;
@@ -149,24 +149,74 @@ float Close2GL::horizontalFieldOfView(float FOVy, float screenWidth, float scree
     return 2.0f * atan(tan(FOVy/2.0f)/screenHeight*screenWidth);
 }
 
-void Close2GL::rasterizeNoShading(ColorBuffer& buffer, vec3 color, vector<unsigned int> indices, vector<vec3> positions, int renderingMode) {
+void Close2GL::rasterize(
+    ColorBuffer& buffer, 
+    vec3 color, 
+    vector<unsigned int> indices, 
+    vector<vec3> positions, 
+    int primitive
+) {
+    color *= 255.0f;
     int indexCount = indices.size();
-    Rasterizer rasterizer(buffer, color);
+    DepthBuffer empty;
+    Rasterizer rasterizer(buffer, empty);
     for (int i=0; i+2 < indexCount; i+=3) {
         vector<vec3> vertices = {
             positions[indices[i]],
             positions[indices[i+1]],
             positions[indices[i+2]]
         };
-        switch(renderingMode) {
+        switch(primitive) { 
             case TRIANGLES:
-                rasterizer.rasterizeTriangle(vertices);
+                rasterizer.rasterizeTriangle(vertices, color);
                 break;
             case LINES:
-                rasterizer.rasterizeLines(vertices);
+                rasterizer.rasterizeLines(vertices, color);
                 break;
             case POINTS:
-                rasterizer.rasterizePoints(vertices);
+                rasterizer.rasterizePoints(vertices, color);
+                break;
+        }
+    }
+}
+
+void Close2GL::rasterize(
+    ColorBuffer& colorBuffer, 
+    DepthBuffer& depthBuffer,
+    vector<unsigned int> indices, 
+    vector<vec3> positions, 
+    vector<vec3> cameraPositions,
+    vector<vec3> normals, 
+    int primitive, 
+    Shader shader
+) {
+    Rasterizer rasterizer(colorBuffer, depthBuffer);
+
+    int indexCount = indices.size();
+    for (int i=0; i+2 < indexCount; i+=3) {
+        vector<vec3> vertices = {
+            positions[indices[i]],
+            positions[indices[i+1]],
+            positions[indices[i+2]]
+        };
+        vector<vec3> vertexNormals = {
+            normals[indices[i]],
+            normals[indices[i+1]],
+            normals[indices[i+2]]
+        };
+        vector<vec3> colors = {
+            shader.applyPhongLightingModel(cameraPositions[indices[i]], vertexNormals[0]),
+            shader.applyPhongLightingModel(cameraPositions[indices[i+1]], vertexNormals[1]),
+            shader.applyPhongLightingModel(cameraPositions[indices[i+2]], vertexNormals[2])
+        };
+        switch(primitive) { 
+            case TRIANGLES:
+                break;
+            case LINES:
+                rasterizer.rasterizeLines(vertices, colors);
+                break;
+            case POINTS:
+                rasterizer.rasterizePoints(vertices, colors);
                 break;
         }
     }
