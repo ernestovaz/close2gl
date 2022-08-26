@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <climits>
+#include <iostream>
 
 Rasterizer::Rasterizer(ColorBuffer& colorBuffer, DepthBuffer& depthBuffer)
 : colorBuffer(colorBuffer), depthBuffer(depthBuffer)
@@ -22,10 +23,10 @@ void Rasterizer::rasterizeLines(vector<vec3> vertices, vec3 color) {
     drawLine(vertices[2], vertices[0], color);
 }
 
-void Rasterizer::rasterizeLines(vector<vec3> vertices, vector<vec3> colors) {
-    drawLine(vertices[0], vertices[1], colors[0], colors[1]);
-    drawLine(vertices[1], vertices[2], colors[1], colors[2]);
-    drawLine(vertices[2], vertices[0], colors[2], colors[0]);
+void Rasterizer::rasterizeLines(vector<vec3> vertices, vector<vec3> colors, vector<float> wValues) {
+    drawLine(vertices[0], vertices[1], colors[0], colors[1], wValues[0], wValues[1]);
+    drawLine(vertices[1], vertices[2], colors[1], colors[2], wValues[1], wValues[2]);
+    drawLine(vertices[2], vertices[0], colors[2], colors[0], wValues[2], wValues[0]);
 }
 
 void Rasterizer::rasterizePoints(vector<vec3> vertices, vec3 color) {
@@ -185,18 +186,18 @@ void Rasterizer::drawIncreasingLine(vec3 start, vec3 end, vec3 color) {
     }
 }
 
-void Rasterizer::drawLine(vec3 p1, vec3 p2, vec3 color1, vec3 color2) {
+void Rasterizer::drawLine(vec3 p1, vec3 p2, vec3 color1, vec3 color2, float w1, float w2) {
     if(abs(p2.y - p1.y) < abs(p2.x - p1.x)) {
-        if(p1.x > p2.x) drawDecreasingLine(p2, p1, color2, color1);
-        else drawDecreasingLine(p1, p2, color1, color2);
+        if(p1.x > p2.x) drawDecreasingLine(p2, p1, color2, color1, w2, w1);
+        else drawDecreasingLine(p1, p2, color1, color2, w1, w2);
     }
     else{
-        if(p1.y > p2.y) drawIncreasingLine(p2, p1, color2, color1);
-        else drawIncreasingLine(p1, p2, color1, color2);
+        if(p1.y > p2.y) drawIncreasingLine(p2, p1, color2, color1, w2, w1);
+        else drawIncreasingLine(p1, p2, color1, color2, w1, w2);
     }
 }
 
-void Rasterizer::drawDecreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 endColor) {
+void Rasterizer::drawDecreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 endColor, float startW, float endW) {
     float dX = end.x - start.x;
     float dY = end.y - start.y;
     float dZ = end.z - start.z;
@@ -217,12 +218,14 @@ void Rasterizer::drawDecreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 
     float zDifference = (2 * dZ) - dX;
     float z = start.z;
     
-    vec3 colorStep = calculateColorInterpolationStep(startColor, endColor, dX);
-    vec3 color = startColor;
+    vec4 h_startColor   = vec4(startColor, 1.0)/startW;
+    vec4 h_endColor     = vec4(endColor, 1.0)/endW;
+    vec4 colorStep = calculateColorInterpolationStep(h_startColor, h_endColor, dX);
+    vec4 color = h_startColor;
     
     for (int x = start.x; x <= end.x; x++) {
         if(depthBuffer.update(x, y, z))
-            colorBuffer.setColor(x, y, color);
+            colorBuffer.setColor(x, y, color/color.w);
         color += colorStep;
         if (yDifference > 0) {
             y += yIncrement;
@@ -239,7 +242,7 @@ void Rasterizer::drawDecreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 
     }
 }
 
-void Rasterizer::drawIncreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 endColor) {
+void Rasterizer::drawIncreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 endColor, float startW, float endW) {
     float dX = end.x - start.x;
     float dY = end.y - start.y;
     float dZ = end.z - start.z;
@@ -260,12 +263,16 @@ void Rasterizer::drawIncreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 
     float zDifference = (2 * dZ) - dX;
     float z = start.z;
 
-    vec3 colorStep = calculateColorInterpolationStep(startColor, endColor, dY);
-    vec3 color = startColor;
+    
+    vec4 h_startColor   = vec4(startColor, 1.0)/startW;
+    vec4 h_endColor     = vec4(endColor, 1.0)/endW;
+    vec4 colorStep = calculateColorInterpolationStep(h_startColor, h_endColor, dY);
+    vec4 color = h_startColor;
+    
     
     for (int y = start.y; y <= end.y; y++) {
         if(depthBuffer.update(x, y, z))
-            colorBuffer.setColor(x, y, color);
+            colorBuffer.setColor(x, y, color/color.w);
         color += colorStep;
         if (difference > 0) {
             x += increment;
@@ -282,7 +289,7 @@ void Rasterizer::drawIncreasingLine(vec3 start, vec3 end, vec3 startColor, vec3 
     }
 }
 
-vec3 Rasterizer::calculateColorInterpolationStep(vec3 start, vec3 end, int steps) {
-    vec3 difference = end - start;
+vec4 Rasterizer::calculateColorInterpolationStep(vec4 start, vec4 end, int steps) {
+    vec4 difference = end - start;
     return difference / (float) steps;
 }

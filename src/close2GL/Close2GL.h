@@ -25,7 +25,7 @@ namespace Close2GL {
     const int NO_SHADING = 0;
     const int GOURAUD_SHADING = 1;
     
-    vector<vec3> transformAndPerspectiveDivide(vector<vec3> positions, mat4 transformation);
+    vector<vec3> transformAndPerspectiveDivide(vector<vec3> positions, mat4 transformation, vector<float>& wValues);
     vector<vec3> transform(vector<vec3> positions, mat4 transformation);
     vector<unsigned int> viewFrustumCulling(vector<unsigned int> indices, vector<vec3> positions);
     vector<unsigned int> backfaceCulling(vector<unsigned int> indices, vector<vec3> positions, bool isCW);
@@ -42,6 +42,7 @@ namespace Close2GL {
         vector<vec3> positions, 
         vector<vec3> cameraPositions,
         vector<vec3> normals, 
+        vector<float> wValues,
         int primitive, 
         Shader shader
     );

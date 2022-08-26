@@ -9,15 +9,17 @@
 using std::sort;
 using std::swap;
 
-vector<vec3> Close2GL::transformAndPerspectiveDivide(vector<vec3> positions, mat4 modelViewProjection) {
+vector<vec3> Close2GL::transformAndPerspectiveDivide(vector<vec3> positions, mat4 modelViewProjection, vector<float>& wValues) {
     int vertexCount = positions.size();
     vector<vec3> transformedVector(vertexCount);
+    wValues.reserve(vertexCount);
     for (int i = 0; i < vertexCount; i++) {
         vec4 newPosition(positions[i], 1.0f);
         newPosition = modelViewProjection * newPosition;
         newPosition.x /= newPosition.w;
         newPosition.y /= newPosition.w;
         newPosition.z /= newPosition.w;
+        wValues.push_back(newPosition.w);
         transformedVector[i] = newPosition;
     }
     return transformedVector;
@@ -187,6 +189,7 @@ void Close2GL::rasterize(
     vector<vec3> positions, 
     vector<vec3> cameraPositions,
     vector<vec3> normals, 
+    vector<float> wValues,
     int primitive, 
     Shader shader
 ) {
@@ -209,11 +212,16 @@ void Close2GL::rasterize(
             shader.applyPhongLightingModel(cameraPositions[indices[i+1]], vertexNormals[1]),
             shader.applyPhongLightingModel(cameraPositions[indices[i+2]], vertexNormals[2])
         };
+        vector<float> currentWValues = {
+            wValues.at(indices[i]),
+            wValues.at(indices[i+1]),
+            wValues.at(indices[i+2])
+        };
         switch(primitive) { 
             case TRIANGLES:
                 break;
             case LINES:
-                rasterizer.rasterizeLines(vertices, colors);
+                rasterizer.rasterizeLines(vertices, colors, currentWValues);
                 break;
             case POINTS:
                 rasterizer.rasterizePoints(vertices, colors);

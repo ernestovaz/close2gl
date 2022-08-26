@@ -242,22 +242,28 @@ void Renderer::close2GLRender() {
     } else FOVx = radians(Renderer::horizontalFieldOfView);
 
     mat4 view  = Close2GL::viewMatrix(
-            Camera::position,
-            Camera::direction,
-            Camera::up
+        Camera::position,
+        Camera::direction,
+        Camera::up
     );
     mat4 projection = Close2GL::projectionMatrix(
-            FOVx, FOVy, 
-            Renderer::nearPlane,
-            Renderer::farPlane
+        FOVx, FOVy, 
+        Renderer::nearPlane,
+        Renderer::farPlane
     );
-    
-    vector<vec3> cameraPositions = Close2GL::transform(Model::positions, view);
-    vector<vec3> positions = Close2GL::transformAndPerspectiveDivide(cameraPositions, projection);
-    vector<unsigned int> indices = Close2GL::viewFrustumCulling(Model::indices, positions);
-    mat4 viewport = Close2GL::viewportMatrix(0, 0, Window::width, Window::height);
-    positions = Close2GL::transform(positions, viewport);
+    mat4 viewport = Close2GL::viewportMatrix(
+        0, 0, 
+        Window::width, Window::height
+    );
 
+    vector<vec3> cameraPositions = Close2GL::transform(Model::positions, view);
+
+    vector<float> wValues;
+    vector<vec3> positions = Close2GL::transformAndPerspectiveDivide(cameraPositions, projection, wValues);
+
+    vector<unsigned int> indices = Close2GL::viewFrustumCulling(Model::indices, positions);
+    positions = Close2GL::transform(positions, viewport);
+    
     if (Renderer::cullingEnabled) {
         indices = Close2GL::backfaceCulling(indices, positions, Renderer::reverseFaceOrientation);
     }
@@ -268,8 +274,8 @@ void Renderer::close2GLRender() {
         Close2GL::rasterize(colorBuffer, renderingColor, indices, positions, (int)renderingPrimitive);
     } else {
         vector<vec3> normals = Model::normals;
-        Shader shader(Camera::position, vec3(1.0f), renderingColor);
-        Close2GL::rasterize(colorBuffer, depthBuffer, indices, positions, cameraPositions, normals, (int)renderingPrimitive, shader);
+        Close2GL::Shader shader(vec3(1.0f), Camera::position, renderingColor);
+        Close2GL::rasterize(colorBuffer, depthBuffer, indices, positions, cameraPositions, normals, wValues, (int)renderingPrimitive, shader);
     }
 
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
