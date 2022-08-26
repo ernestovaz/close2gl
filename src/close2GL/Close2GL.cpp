@@ -219,6 +219,7 @@ void Close2GL::rasterize(
         };
         switch(primitive) { 
             case TRIANGLES:
+                rasterizer.rasterizeTriangle(vertices, colors, currentWValues);
                 break;
             case LINES:
                 rasterizer.rasterizeLines(vertices, colors, currentWValues);

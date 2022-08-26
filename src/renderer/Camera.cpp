@@ -55,8 +55,8 @@ void Camera::setFocusPoint(vec3 focusPoint, float width, float length) {
 
 void Camera::updateDirection(float xMovement, float yMovement) {
     if(!shouldFocusCenter){
-        yaw     -= xMovement;
-        pitch   -= yMovement;
+        yaw     -= xMovement * 0.05;
+        pitch   -= yMovement * 0.05;
         normalizeRotation();
         vec3 newDirection;
         newDirection.x = cos(yaw) * cos(pitch);
