@@ -8,12 +8,12 @@ uniform mat4 view;
 uniform mat4 projection;
 
 uniform vec3 color;
+uniform vec3 camera_position;
 
 //values to be interpolated as fragments values
 out vec4 world_position; 
 out vec4 world_normal;
 out vec4 vertex_interpolated_color;
-out vec4 camera_position;
 
 #define DIFFUSE_REFLECTANCE     vec3(1.0, 1.0, 1.0)
 #define AMBIENT_REFLECTANCE     vec3(1.0, 1.0, 1.0)
@@ -40,19 +40,9 @@ vec3 specular_shading(vec3 ks, vec3 I, vec4 r, vec4 v, float q) {
 
 void main(){
   gl_Position = projection * view * model * vec4(vertex_position, 1.0);
-  
-  world_position = view * model * vec4(vertex_position, 1.0);
-  world_position /= world_position.w;
-
-  /*
-  // normals should be translated inversely
-  world_normal   = inverse(transpose(model)) * vec4(vertex_normal, 0.0);
-  world_normal.w = 0.0; // w is discarded, vectors should have w = 0
-                        // */
-  world_normal = vec4(vertex_normal, 0.0);
-
-  camera_position = inverse(view) * vec4(0.0, 0.0, 0.0, 1.0);
-  vertex_interpolated_color = shading_function(world_position, normalize(vec4(vertex_normal,0.0)));
+  world_position = vec4(vertex_position, 1.0);
+  world_normal   = vec4(vertex_normal, 0.0);
+  vertex_interpolated_color = shading_function(world_position, world_normal);
 }
 
 subroutine(shading_mode) vec4 no_shading(vec4 position, vec4 normal) {
@@ -61,11 +51,12 @@ subroutine(shading_mode) vec4 no_shading(vec4 position, vec4 normal) {
 
 subroutine(shading_mode) vec4 ambient_diffuse_shading(vec4 position, vec4 normal) {
   vec3 shaded_color = vec3(0.0);
+  vec4 light_source_direction = normalize(vec4(camera_position, 1.0) + vec4(2.0, 2.0, 2.0, 0.0) - position);
   shaded_color += diffuse_shading(
       DIFFUSE_REFLECTANCE, 
       LIGHT_SOURCE_COLOR, 
       normal, 
-      LIGHT_SOURCE_DIRECTION
+      light_source_direction
   );
   shaded_color += ambient_shading(
       AMBIENT_REFLECTANCE,
@@ -76,18 +67,19 @@ subroutine(shading_mode) vec4 ambient_diffuse_shading(vec4 position, vec4 normal
 
 subroutine(shading_mode) vec4 ambient_diffuse_specular_shading(vec4 position, vec4 normal) {
   vec3 shaded_color = vec3(0.0);
+  vec4 light_source_direction = normalize(vec4(camera_position, 1.0) + vec4(2.0, 2.0, 2.0, 0.0) - position);
   shaded_color += diffuse_shading(
       DIFFUSE_REFLECTANCE, 
       LIGHT_SOURCE_COLOR, 
       normal, 
-      LIGHT_SOURCE_DIRECTION
+      light_source_direction
   );
   shaded_color += ambient_shading(
       AMBIENT_REFLECTANCE,
       AMBIENT_LIGHT_COLOR
   );
-  vec4 v = normalize(camera_position - position);
-  vec4 r = -LIGHT_SOURCE_DIRECTION + 2 * normal * dot(normal, LIGHT_SOURCE_DIRECTION);
+  vec4 v = normalize(vec4(camera_position,1.0) - position);
+  vec4 r = -light_source_direction + 2 * normal * dot(normal, light_source_direction);
   shaded_color += specular_shading(
       SPECULAR_REFLECTANCE,
       LIGHT_SOURCE_COLOR,

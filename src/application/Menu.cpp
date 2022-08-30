@@ -64,12 +64,6 @@ void Menu::render() {
         const char* APIs[] = {"OpenGL", "Close2GL" }; 
         ImGui::Combo("Rendering API", currentAPI, APIs, IM_ARRAYSIZE(APIs));
 
-        const char* shadingMethods[] = { 
-            "No Shading", 
-            "Gouraud (Ambient + Diffuse)",
-            "Gouraud (Ambient + Diffuse + Specular)",
-            "Phong (Ambient + Diffuse + Specular)"
-        };
 
         /*
         if(*currentAPI == 1) {
@@ -78,15 +72,25 @@ void Menu::render() {
             Renderer::currentShadingMethod = 0;
         }
         */
+        const char* openGLShadingMethods[] = { 
+            "No Shading", 
+            "Gouraud (Ambient + Diffuse)",
+            "Gouraud (Ambient + Diffuse + Specular)",
+            "Phong (Ambient + Diffuse + Specular)"
+        };
+        const char* close2GLshadingMethods[] = { 
+            "No Shading", 
+            "Gouraud (Ambient + Diffuse + Specular)",
+        };
         ImGui::PushItemWidth(180);
-        ImGui::Combo("Shading Method", &Renderer::currentShadingMethod, 
-                shadingMethods, IM_ARRAYSIZE(shadingMethods));
-        /*
-        if(*currentAPI == 1) {
-            ImGui::PopItemFlag();
-            ImGui::PopStyleVar();
+        if(*currentAPI == 0) {
+            ImGui::Combo("Shading Method", &Renderer::currentShadingMethod, 
+                    openGLShadingMethods, IM_ARRAYSIZE(openGLShadingMethods));
+        } else {
+            if(Renderer::currentShadingMethod > 1) Renderer::currentShadingMethod = 1;
+            ImGui::Combo("Shading Method", &Renderer::currentShadingMethod, 
+                    close2GLshadingMethods, IM_ARRAYSIZE(close2GLshadingMethods));
         }
-        */
 
         ImGui::PushItemWidth(180);
         ImGui::ColorEdit3("Model Color", glm::value_ptr(Renderer::renderingColor));

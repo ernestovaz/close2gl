@@ -59,6 +59,7 @@ void Renderer::initializeOpenGL() {
     openGLViewUniform =         glGetUniformLocation(openGLProgram, "view");
     openGLProjectionUniform =   glGetUniformLocation(openGLProgram, "projection");
     openGLColorUniform =        glGetUniformLocation(openGLProgram, "color");
+    openGLCameraPositionUniform=glGetUniformLocation(openGLProgram, "camera_position");
 
     openGLVAO = createOpenGLVAO(); 
 
@@ -214,6 +215,7 @@ void Renderer::openGLRender() {
     glUniformMatrix4fv(openGLViewUniform,1,GL_FALSE, value_ptr(view));
     glUniformMatrix4fv(openGLProjectionUniform,1,GL_FALSE, value_ptr(projection));
     glUniform3fv(openGLColorUniform, 1, value_ptr(Renderer::renderingColor));
+    glUniform3fv(openGLCameraPositionUniform, 1, value_ptr(Camera::position));
 
     if(Renderer::cullingEnabled) glEnable(GL_CULL_FACE);
     else glDisable(GL_CULL_FACE);
@@ -274,8 +276,8 @@ void Renderer::close2GLRender() {
         Close2GL::rasterize(colorBuffer, renderingColor, indices, positions, (int)renderingPrimitive);
     } else {
         vector<vec3> normals = Model::normals;
-        Close2GL::Shader shader(vec3(1.0f), Camera::position, renderingColor);
-        Close2GL::rasterize(colorBuffer, depthBuffer, indices, positions, cameraPositions, normals, wValues, (int)renderingPrimitive, shader);
+        Close2GL::Shader shader(Camera::position + vec3(2.0, 2.0, 2.0), Camera::position, renderingColor);
+        Close2GL::rasterize(colorBuffer, depthBuffer, indices, positions, Model::positions, normals, wValues, (int)renderingPrimitive, shader);
     }
 
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);

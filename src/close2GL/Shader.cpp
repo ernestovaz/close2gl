@@ -14,8 +14,8 @@ Close2GL::Shader::Shader(vec3 lightPosition, vec3 eyePosition, vec3 objectColor)
 
 vec3 Close2GL::Shader::applyPhongLightingModel(vec3 vertex, vec3 normal) {
     vec3 color = vec3(0.0f);
-    vec3 eyeDirection = normalize(vec3(0.0f, 0.0f, 0.0f) - vertex);
-    vec3 lightDirection = LIGHT_DIRECTION;
+    vec3 eyeDirection   = normalize(eyePosition - vertex);
+    vec3 lightDirection = normalize(lightPosition - vertex);
 
     color += DIFFUSE_REFLECTANCE * 
         diffuseReflection(LIGHT_COLOR, normal, lightDirection);

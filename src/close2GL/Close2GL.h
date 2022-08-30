@@ -40,7 +40,7 @@ namespace Close2GL {
         DepthBuffer& depthBuffer,
         vector<unsigned int> indices, 
         vector<vec3> positions, 
-        vector<vec3> cameraPositions,
+        vector<vec3> worldPositions,
         vector<vec3> normals, 
         vector<float> wValues,
         int primitive, 

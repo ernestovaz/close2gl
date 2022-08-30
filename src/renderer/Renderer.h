@@ -73,6 +73,7 @@ private:
     int openGLViewUniform;
     int openGLProjectionUniform;
     int openGLColorUniform;
+    int openGLCameraPositionUniform;
     int openGLShadingSubroutine;
 
     int close2GLColorUniform;

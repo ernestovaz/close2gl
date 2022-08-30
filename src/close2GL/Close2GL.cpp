@@ -187,7 +187,7 @@ void Close2GL::rasterize(
     DepthBuffer& depthBuffer,
     vector<unsigned int> indices, 
     vector<vec3> positions, 
-    vector<vec3> cameraPositions,
+    vector<vec3> worldPositions,
     vector<vec3> normals, 
     vector<float> wValues,
     int primitive, 
@@ -208,9 +208,9 @@ void Close2GL::rasterize(
             normals[indices[i+2]]
         };
         vector<vec3> colors = {
-            shader.applyPhongLightingModel(cameraPositions[indices[i]], vertexNormals[0]),
-            shader.applyPhongLightingModel(cameraPositions[indices[i+1]], vertexNormals[1]),
-            shader.applyPhongLightingModel(cameraPositions[indices[i+2]], vertexNormals[2])
+            shader.applyPhongLightingModel(worldPositions[indices[i]], vertexNormals[0]),
+            shader.applyPhongLightingModel(worldPositions[indices[i+1]], vertexNormals[1]),
+            shader.applyPhongLightingModel(worldPositions[indices[i+2]], vertexNormals[2])
         };
         vector<float> currentWValues = {
             wValues.at(indices[i]),
