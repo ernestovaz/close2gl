@@ -9,9 +9,5 @@ vec3 TextureSamplerNearest::getColor(vec2 uv){
     int x = uv.x * width;
     int y = uv.y * height;
 
-    color.x = data[(height * x + y) * 3 + 0];
-    color.y = data[(height * x + y) * 3 + 1];
-    color.z = data[(height * x + y) * 3 + 2];
-
-    return color;
+    return getTexelColor(x,y);
 }

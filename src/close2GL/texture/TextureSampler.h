@@ -10,8 +10,8 @@ class TextureSampler{
 public:
     TextureSampler(unsigned char* data, int width, int height);
     virtual vec3 getColor(vec2 uv){ return vec3(0.0f); }
-
 protected:
+    vec3 getTexelColor(int x, int y);
     unsigned char* data;
     int width;
     int height;
