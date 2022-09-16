@@ -4,7 +4,7 @@
 #include "rasterization/RasterizerLine.h"
 #include "rasterization/RasterizerTriangle.h"
 
-#include "Shader.h"
+#include "shaders/Shader.h"
 
 #include <iostream>
 #include <glm/vec4.hpp>
