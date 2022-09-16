@@ -11,7 +11,6 @@
 
 #include "../application/Window.h"
 #include "../close2GL/Close2GL.h"
-#include "../close2GL/Close2GLClass.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -142,7 +141,7 @@ void Renderer::loadTexture() {
 }
 
 void Renderer::close2GLResize() {
-    Close2GLClass::updateViewport(0, 0, Window::width, Window::height);
+    Close2GL::updateViewport(0, 0, Window::width, Window::height);
     glDeleteTextures(1, &close2GLTexture);
     glGenTextures(1, &close2GLTexture);
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
@@ -289,29 +288,29 @@ void Renderer::close2GLRender() {
     glDisable(GL_CULL_FACE); //culling should be done in Close2GL
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    Close2GLClass::verticalFOV = radians(Renderer::verticalFieldOfView);
+    Close2GL::verticalFOV = radians(Renderer::verticalFieldOfView);
     if (!Renderer::fieldOfViewIsAsymmetric) {
         //manually calculate horizontal field of view for simmetry
-        Close2GLClass::horizontalFOV = Close2GLClass::calculateHorizontalFOV();
-        Renderer::horizontalFieldOfView = degrees(Close2GLClass::horizontalFOV);
-    } else Close2GLClass::horizontalFOV = radians(Renderer::horizontalFieldOfView);
+        Close2GL::horizontalFOV = Close2GL::calculateHorizontalFOV();
+        Renderer::horizontalFieldOfView = degrees(Close2GL::horizontalFOV);
+    } else Close2GL::horizontalFOV = radians(Renderer::horizontalFieldOfView);
 
-    Close2GLClass::shading = static_cast<Close2GLClass::Shading>(Renderer::currentShadingMethod);
-    Close2GLClass::primitive = static_cast<Close2GLClass::Primitive>(Renderer::renderingPrimitive);
-    Close2GLClass::color = renderingColor;
+    Close2GL::shading = static_cast<Close2GL::Shading>(Renderer::currentShadingMethod);
+    Close2GL::primitive = static_cast<Close2GL::Primitive>(Renderer::renderingPrimitive);
+    Close2GL::color = renderingColor * 255.0f;
 
-    Close2GLClass::cameraPosition = Camera::position;
-    Close2GLClass::cameraDirection = Camera::direction;
-    Close2GLClass::cameraUp = Camera::up;
-    Close2GLClass::near = nearPlane;
-    Close2GLClass::far = farPlane;
+    Close2GL::cameraPosition = Camera::position;
+    Close2GL::cameraDirection = Camera::direction;
+    Close2GL::cameraUp = Camera::up;
+    Close2GL::near = nearPlane;
+    Close2GL::far = farPlane;
 
-    Close2GLClass::clear(BACKGROUND_COLOR * 255.0f);
-    Close2GLClass::draw(Model::indices, Model::positions, Model::normals, Model::textureCoords);
+    Close2GL::clear(BACKGROUND_COLOR * 255.0f);
+    Close2GL::draw(Model::indices, Model::positions, Model::normals, Model::textureCoords);
 
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Window::width, Window::height, 
-        GL_RGB, GL_UNSIGNED_BYTE, Close2GLClass::getRenderedData());
+        GL_RGB, GL_UNSIGNED_BYTE, Close2GL::getRenderedData());
 
     glBindVertexArray(close2GLVAO);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

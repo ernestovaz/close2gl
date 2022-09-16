@@ -1,46 +1,169 @@
 #include "Close2GL.h"
 
-#include "Rasterizer.h"
+#include "rasterization/RasterizerPoint.h"
+#include "rasterization/RasterizerLine.h"
+#include "rasterization/RasterizerTriangle.h"
 
-#include <cstddef>
-#include <algorithm>
+#include "Shader.h"
+
 #include <iostream>
+#include <glm/vec4.hpp>
 
-using std::sort;
-using std::swap;
+using std::cout;
+using std::endl;
+using glm::vec4;
 
-vector<vec3> Close2GL::transformAndPerspectiveDivide(vector<vec3> positions, mat4 modelViewProjection, vector<float>& wValues) {
-    int vertexCount = positions.size();
-    vector<vec3> transformedVector(vertexCount);
-    wValues.reserve(vertexCount);
-    for (int i = 0; i < vertexCount; i++) {
-        vec4 newPosition(positions[i], 1.0f);
-        newPosition = modelViewProjection * newPosition;
-        newPosition.x /= newPosition.w;
-        newPosition.y /= newPosition.w;
-        newPosition.z /= newPosition.w;
-        wValues.push_back(newPosition.w);
-        transformedVector[i] = newPosition;
-    }
-    return transformedVector;
+Close2GL::Primitive Close2GL::primitive = TRIANGLES;
+Close2GL::Shading Close2GL::shading = NO_SHADING;
+Close2GL::Orientation Close2GL::frontFace = CCW;
+
+vec3 Close2GL::color = vec3(0.0f, 0.0f, 0.0f);
+bool Close2GL::useTexture = false;
+bool Close2GL::useHorizontalFOV = false;
+bool Close2GL::performBackfaceCulling = false;
+
+vec3 Close2GL::cameraPosition = vec3(0.0f, 0.0f, 0.0f);
+vec3 Close2GL::cameraDirection = vec3(0.0f, 0.0f,-1.0f);
+vec3 Close2GL::cameraUp = vec3(0.0f, 1.0f, 0.0f);
+
+float Close2GL::verticalFOV = 60;
+float Close2GL::horizontalFOV = 60;
+float Close2GL::near = 0.01;
+float Close2GL::far = 10;
+
+ColorBuffer Close2GL::colorBuffer; 
+DepthBuffer Close2GL::depthBuffer; 
+
+mat4 Close2GL::model; 
+mat4 Close2GL::view; 
+mat4 Close2GL::projection; 
+mat4 Close2GL::viewport = mat4(0.0f); 
+
+float Close2GL::width;
+float Close2GL::height;
+
+vector<float> Close2GL::WValues;
+
+
+void Close2GL::clear(vec3 color){
+    colorBuffer.clear(color);
+    depthBuffer.clear();
 }
 
-vector<vec3> Close2GL::transform(vector<vec3> positions, mat4 transformation) {
-    int vertexCount = positions.size();
-    vector<vec3> transformedVector(vertexCount);
-    for (int i = 0; i < vertexCount; i++) {
-        vec4 newPosition(positions[i], 1.0f);
-        transformedVector[i] = transformation * newPosition;
-    }
-    return transformedVector;
+void Close2GL::updateViewport(int left, int top, int right, int bottom){
+    viewport = mat4(0.0f); 
+
+    //scaling
+    viewport[0][0] = (right - left)/2.0f;
+    viewport[1][1] = (bottom - top)/2.0f;
+    viewport[2][2] = 1;
+    viewport[3][3] = 1;
+
+    //translation
+    viewport[3][0] = (right + left)/2.0f;
+    viewport[3][1] = (bottom + top)/2.0f;
+    
+    width = right-left;
+    height = bottom-top;
+    colorBuffer.resize(width, height);
+    depthBuffer.resize(width, height);
 }
 
-vector<unsigned int> Close2GL::viewFrustumCulling(vector<unsigned int> indices, vector<vec3> positions) { 
-    int indexCount = indices.size();
+void Close2GL::draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> norms, vector<vec2> uvs) {
+    updateView();
+    updateProjection();
+
+    vector<vec3> cameraPositions = transform(pos, view, false);
+    vector<vec3> projectedPositions = transform(cameraPositions, projection, true);
+    vector<unsigned int> culledIndices = viewFrustumCull(ids, projectedPositions);
+
+    vector<vec3> screenPositions = transform(projectedPositions, viewport, false);
+    if(performBackfaceCulling){
+        culledIndices = backfaceCull(culledIndices, screenPositions);
+    }
+    
+    int count = culledIndices.size();
+    Rasterizer* rasterizer = NULL;
+    switch(primitive){
+        case POINTS:
+            rasterizer = new RasterizerPoint(colorBuffer, depthBuffer);
+            break;
+        case LINES:
+            rasterizer = new RasterizerLine(colorBuffer, depthBuffer);
+            break;
+        case TRIANGLES:
+            rasterizer = new RasterizerTriangle(colorBuffer, depthBuffer);
+            break;
+    }
+    switch (shading){
+        case NO_SHADING:
+            drawNoShading(culledIndices, screenPositions, uvs, rasterizer);
+            break;
+        case GOURAUD:
+            drawGouraud(culledIndices, screenPositions, norms, uvs, rasterizer);
+            break;
+    }
+    delete rasterizer;
+}
+
+void Close2GL::drawNoShading(vector<unsigned int> ids, vector<vec3> pos, vector<vec2> uvs, Rasterizer* rasterizer) {
+    for(int i=0; i+2 < ids.size(); i+=3) {
+        vector<vec3> vertices = {
+            pos[ids[i]],
+            pos[ids[i+1]],
+            pos[ids[i+2]]
+        };
+        rasterizer->rasterize(vertices, color);
+    }
+}
+
+void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> norms, vector<vec2> uvs, Rasterizer* rasterizer){
+    Shader shader(cameraPosition + vec3(2.0, 2.0, 2.0), cameraPosition, color);
+    for(int i=0; i+2 < ids.size(); i+=3) {
+        vector<vec4> vertices = {
+            vec4(pos[ids[i  ]], WValues.at(ids[i  ])),
+            vec4(pos[ids[i+1]], WValues.at(ids[i+1])),
+            vec4(pos[ids[i+2]], WValues.at(ids[i+2]))
+        };
+        vector<vec3> colors = {
+            shader.applyPhongLightingModel(pos[ids[i  ]], norms[ids[i  ]]),
+            shader.applyPhongLightingModel(pos[ids[i+1]], norms[ids[i+1]]),
+            shader.applyPhongLightingModel(pos[ids[i+2]], norms[ids[i+2]])
+        };
+        rasterizer->rasterize(vertices, colors);
+    }
+}
+
+unsigned char* Close2GL::getRenderedData() {
+    return colorBuffer.data();
+}
+
+vector<vec3> Close2GL::transform(vector<vec3> array, mat4 transformation, bool perspectiveDivide){
+    int count = array.size();
+    if(perspectiveDivide){
+        WValues.clear();
+        WValues.reserve(count);
+    }
+    for (int i = 0; i < count; i++) {
+        vec4 newValue(array[i], 1.0f);
+        newValue = transformation * newValue;
+        if(perspectiveDivide){
+            newValue.x /= newValue.w;
+            newValue.y /= newValue.w;
+            newValue.z /= newValue.w;
+            WValues.push_back(newValue.w);
+        }
+        array[i] = newValue;
+    }
+    return array;
+}
+
+vector<unsigned int> Close2GL::viewFrustumCull(vector<unsigned int> ids, vector<vec3> pos){
+    int indexCount = ids.size();
     for (int i=0; i+2<indexCount; i+=3) {
-        vec3 vertex1 = positions[indices[i]];
-        vec3 vertex2 = positions[indices[i+1]];
-        vec3 vertex3 = positions[indices[i+2]];
+        vec3 vertex1 = pos[ids[i]];
+        vec3 vertex2 = pos[ids[i+1]];
+        vec3 vertex3 = pos[ids[i+2]];
 
         if (
             vertex1.x < -1 || vertex1.x > 1 ||
@@ -53,22 +176,21 @@ vector<unsigned int> Close2GL::viewFrustumCulling(vector<unsigned int> indices, 
             vertex2.z < -1 || vertex2.z > 1 ||
             vertex3.z < -1 || vertex3.z > 1 ) {
 
-            indices.erase(indices.begin()+i, indices.begin()+i+3);
+            ids.erase(ids.begin()+i, ids.begin()+i+3);
             i-=3;
             indexCount-=3;
 
         }
     }
-
-    return indices;
+    return ids;
 }
 
-vector<unsigned int> Close2GL::backfaceCulling(vector<unsigned int> indices, vector<vec3> positions, bool isCW) { 
-    int indexCount = indices.size();
+vector<unsigned int> Close2GL::backfaceCull(vector<unsigned int> ids, vector<vec3> pos){
+    int indexCount = ids.size();
     for (int i=0; i+2<indexCount; i+=3) {
-        vec3 vertex1 = positions[indices[i]];
-        vec3 vertex2 = positions[indices[i+1]];
-        vec3 vertex3 = positions[indices[i+2]];
+        vec3 vertex1 = pos[ids[i]];
+        vec3 vertex2 = pos[ids[i+1]];
+        vec3 vertex3 = pos[ids[i+2]];
 
         int pair1 = vertex1.x*vertex2.y - vertex2.x*vertex1.y;
         int pair2 = vertex2.x*vertex3.y - vertex3.x*vertex2.y;
@@ -76,157 +198,55 @@ vector<unsigned int> Close2GL::backfaceCulling(vector<unsigned int> indices, vec
 
         float a = (pair1 + pair2 + pair3)/2.0f;
 
-        if (((a > 0) && isCW) || ((a < 0) && !isCW)) {
+        bool isCW = frontFace == CW;
+        if (((a > 0) && (isCW)) || ((a < 0) && !isCW)) {
 
-            indices.erase(indices.begin()+i, indices.begin()+i+3);
+            ids.erase(ids.begin()+i, ids.begin()+i+3);
             i-=3;
             indexCount-=3;
 
         }
     }
-
-    return indices;
+    return ids;
 }
 
-mat4 Close2GL::projectionMatrix(float FOVx, float FOVy, float nearPlane, float farPlane) {
-
-    float nearPlaneWidth = 2 * tan(FOVx/2) * (nearPlane);
-    float nearPlaneHeight = 2 * tan(FOVy/2) * (nearPlane);
-    float frustumLength = farPlane - nearPlane;
-
-    mat4 projection = mat4(0.0);
-
-    projection[0][0] = 2 * nearPlane / nearPlaneWidth;
-    projection[1][1] = 2 * nearPlane / nearPlaneHeight;
-    projection[2][2] = -(farPlane + nearPlane)/ frustumLength;
-    projection[3][2] = - 2 * farPlane * nearPlane / frustumLength;
-    projection[2][3] = -1;
-
-    return projection;
+float Close2GL::calculateHorizontalFOV(){
+    return 2.0f * atan(tan(verticalFOV/2.0f)/height*width);
 }
 
-mat4 Close2GL::viewMatrix(vec3 cameraPosition, vec3 cameraDirection, vec3 cameraUp) {
+void Close2GL::updateView(){
     vec3 n = normalize(-cameraDirection);
     vec3 u = cross(normalize(cameraUp), n);
     vec3 v = cross(n,u);
-    mat4 projection(0.0);
+    view = mat4(0.0f);
 
-    projection[0][0] = u.x;
-    projection[1][0] = u.y;
-    projection[2][0] = u.z;
-    projection[3][0] = dot(-cameraPosition, u);
+    view[0][0] = u.x;
+    view[1][0] = u.y;
+    view[2][0] = u.z;
+    view[3][0] = dot(-cameraPosition, u);
 
-    projection[0][1] = v.x;
-    projection[1][1] = v.y;
-    projection[2][1] = v.z;
-    projection[3][1] = dot(-cameraPosition, v);
+    view[0][1] = v.x;
+    view[1][1] = v.y;
+    view[2][1] = v.z;
+    view[3][1] = dot(-cameraPosition, v);
 
-    projection[0][2] = n.x;
-    projection[1][2] = n.y;
-    projection[2][2] = n.z;
-    projection[3][2] = dot(-cameraPosition, n);
+    view[0][2] = n.x;
+    view[1][2] = n.y;
+    view[2][2] = n.z;
+    view[3][2] = dot(-cameraPosition, n);
 
-    projection[3][3] = 1;
-
-    return projection;
+    view[3][3] = 1;
 }
 
-mat4 Close2GL::viewportMatrix(int left, int top, int right, int bottom) {
-    mat4 viewport(0.0);
-    
-    // Scaling
-    viewport[0][0] = (right - left)/2.0f;
-    viewport[1][1] = (bottom - top)/2.0f;   // negative value, flips mapping
-    viewport[2][2] = 1;
-    viewport[3][3] = 1;
+void Close2GL::updateProjection(){
+    float widthNear = 2 * tan(horizontalFOV/2) * (near);
+    float heightNear = 2 * tan(verticalFOV/2) * (near);
+    float frustumLength = far - near;
+    projection = mat4(0.0);
 
-// Translation
-    viewport[3][0] = (right + left)/2.0f;
-    viewport[3][1] = (bottom + top)/2.0f;
-    
-    return viewport;
-}
-
-float Close2GL::horizontalFieldOfView(float FOVy, float screenWidth, float screenHeight) {
-    return 2.0f * atan(tan(FOVy/2.0f)/screenHeight*screenWidth);
-}
-
-void Close2GL::rasterize(
-    ColorBuffer& buffer, 
-    vec3 color, 
-    vector<unsigned int> indices, 
-    vector<vec3> positions, 
-    int primitive
-) {
-    color *= 255.0f;
-    int indexCount = indices.size();
-    DepthBuffer empty;
-    Rasterizer rasterizer(buffer, empty);
-    for (int i=0; i+2 < indexCount; i+=3) {
-        vector<vec3> vertices = {
-            positions[indices[i]],
-            positions[indices[i+1]],
-            positions[indices[i+2]]
-        };
-        switch(primitive) { 
-            case TRIANGLES:
-                rasterizer.rasterizeTriangle(vertices, color);
-                break;
-            case LINES:
-                rasterizer.rasterizeLines(vertices, color);
-                break;
-            case POINTS:
-                rasterizer.rasterizePoints(vertices, color);
-                break;
-        }
-    }
-}
-
-void Close2GL::rasterize(
-    ColorBuffer& colorBuffer, 
-    DepthBuffer& depthBuffer,
-    vector<unsigned int> indices, 
-    vector<vec3> positions, 
-    vector<vec3> worldPositions,
-    vector<vec3> normals, 
-    vector<float> wValues,
-    int primitive, 
-    Shader shader
-) {
-    Rasterizer rasterizer(colorBuffer, depthBuffer);
-
-    int indexCount = indices.size();
-    for (int i=0; i+2 < indexCount; i+=3) {
-        vector<vec3> vertices = {
-            positions[indices[i]],
-            positions[indices[i+1]],
-            positions[indices[i+2]]
-        };
-        vector<vec3> vertexNormals = {
-            normals[indices[i]],
-            normals[indices[i+1]],
-            normals[indices[i+2]]
-        };
-        vector<vec3> colors = {
-            shader.applyPhongLightingModel(worldPositions[indices[i]], vertexNormals[0]),
-            shader.applyPhongLightingModel(worldPositions[indices[i+1]], vertexNormals[1]),
-            shader.applyPhongLightingModel(worldPositions[indices[i+2]], vertexNormals[2])
-        };
-        vector<float> currentWValues = {
-            wValues.at(indices[i]),
-            wValues.at(indices[i+1]),
-            wValues.at(indices[i+2])
-        };
-        switch(primitive) { 
-            case TRIANGLES:
-                rasterizer.rasterizeTriangle(vertices, colors, currentWValues);
-                break;
-            case LINES:
-                rasterizer.rasterizeLines(vertices, colors, currentWValues);
-                break;
-            case POINTS:
-                rasterizer.rasterizePoints(vertices, colors);
-                break;
-        }
-    }
+    projection[0][0] = 2 * near / widthNear;
+    projection[1][1] = 2 * near / heightNear;
+    projection[2][2] = -(far + near)/ frustumLength;
+    projection[3][2] = - 2 * far * near / frustumLength;
+    projection[2][3] = -1;
 }
