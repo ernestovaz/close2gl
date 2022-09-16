@@ -6,7 +6,7 @@
 #include "renderer/Model.h"
 #include "application/Window.h"
 
-#define FALLBACK_MODEL_PATH "../data/cow.obj"
+#define FALLBACK_MODEL_PATH "../data/cow_textured.obj"
 
 // SYNTAX: <executable> [PATH_TO_MODEL]
 

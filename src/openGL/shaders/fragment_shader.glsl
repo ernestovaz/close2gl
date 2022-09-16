@@ -5,9 +5,12 @@ out vec4 fragment_color;
 in vec4 world_position;
 in vec4 world_normal;
 in vec4 vertex_interpolated_color;
+in vec2 vertex_interpolated_texture_coordinate;
 
 uniform vec3 color;
 uniform vec3 camera_position;
+uniform int use_texture;
+uniform sampler2D texture_sampler;
 
 #define DIFFUSE_REFLECTANCE     vec3(1.0, 1.0, 1.0)
 #define AMBIENT_REFLECTANCE     vec3(1.0, 1.0, 1.0)
@@ -27,24 +30,28 @@ vec3 specular_shading(vec3 ks, vec3 I, vec4 r, vec4 v, float q) {
   return ks * I * pow(max(0, dot(r,v)),q);
 }
 
-subroutine vec4 shading_mode(vec4 position, vec4 normal);
+subroutine vec4 shading_mode(vec4 position, vec4 normal, vec3 color);
 subroutine uniform shading_mode shading_function;
 
 
 void main() {
-  fragment_color = shading_function(world_position, normalize(world_normal));
+  vec3 shading_color;
+  if(use_texture == 1) shading_color = vec3(texture(texture_sampler, vertex_interpolated_texture_coordinate));
+  else shading_color = color;
+  fragment_color = shading_function(world_position, normalize(world_normal), shading_color);
 }
 
 
-subroutine(shading_mode) vec4 no_shading(vec4 position, vec4 normal) {
+subroutine(shading_mode) vec4 no_shading(vec4 position, vec4 normal, vec3 color) {
   return vec4(color, 1.0);
 }
 
-subroutine(shading_mode) vec4 use_vertex_color(vec4 position, vec4 normal) {
+subroutine(shading_mode) vec4 use_vertex_color(vec4 position, vec4 normal, vec3 color) {
+  if(use_texture == 1) return vertex_interpolated_color * vec4(color, 1.0);
   return vertex_interpolated_color;
 }
 
-subroutine(shading_mode) vec4 ambient_diffuse_specular_shading(vec4 position, vec4 normal) {
+subroutine(shading_mode) vec4 ambient_diffuse_specular_shading(vec4 position, vec4 normal, vec3 color) {
   vec3 shaded_color = vec3(0.0);
   vec4 light_source_direction = normalize(vec4(camera_position, 1.0) + vec4(2.0, 2.0, 2.0, 0.0)- position);
   shaded_color += diffuse_shading(

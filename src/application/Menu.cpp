@@ -102,17 +102,46 @@ void Menu::render() {
         ImGui::Combo("Rendering Primitive", currentPrimitive, 
                 renderingPrimitives, IM_ARRAYSIZE(renderingPrimitives));
 
-        ImGui::Checkbox("Backface Culling", &Renderer::cullingEnabled);
-
         ImGui::PushItemWidth(45);
         static int* currentFaceOrientation = &Renderer::reverseFaceOrientation;
         ImGui::Combo("Triangle Face Orientation", currentFaceOrientation, "CCW\0CW\0");
 
         ImGui::PushItemWidth(60);
         ImGui::DragFloat("Near Plane", &Renderer::nearPlane, 0.05);
-        ImGui::SameLine();
+        ImGui::SameLine(160);
         ImGui::PushItemWidth(60);
         ImGui::DragFloat("Far Plane", &Renderer::farPlane, 0.05);
+
+        ImGui::Checkbox("Backface Culling", &Renderer::cullingEnabled);
+
+        if(!Model::hasTextureCoordinates) {
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+        }
+        ImGui::SameLine(160);
+        ImGui::Checkbox("Texture", &Renderer::shouldUseTexture);
+        if(!Model::hasTextureCoordinates) {
+            ImGui::PopItemFlag();
+            ImGui::PopStyleVar();
+        }
+
+        if(!Renderer::shouldUseTexture) {
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+        }
+        const char* textureFilteringMethods[] = { 
+            "Nearest Neighbour", 
+            "Bilinear",
+            "Trilinear",
+        };
+        ImGui::PushItemWidth(180);
+        static int *currentTextureFiltering = reinterpret_cast<int*>(&Renderer::textureFiltering);
+        ImGui::Combo("Texture Filtering", currentTextureFiltering, 
+                textureFilteringMethods, IM_ARRAYSIZE(textureFilteringMethods));
+        if(!Renderer::shouldUseTexture) {
+            ImGui::PopItemFlag();
+            ImGui::PopStyleVar();
+        }
 
         ImGui::Unindent(10.0f);
     }

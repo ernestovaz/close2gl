@@ -7,6 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+
 #define AI_CONFIG_PP_RVC_FLAGS aiComponent_NORMALS
 
 using std::exit;
@@ -14,13 +15,16 @@ using std::cerr;
 using std::endl;
 using std::fmax;
 
+
 vector<vec3>            Model::positions;
 vector<vec3>            Model::normals;
+vector<vec2>            Model::textureCoords;
 vector<unsigned int>    Model::indices;
 
 vec3    Model::center;
 float   Model::width;
 float   Model::length;
+bool    Model::hasTextureCoordinates = false;
 
 void Model::loadFromFile(string filepath) {
     Assimp::Importer importer;
@@ -73,6 +77,14 @@ void Model::loadFromFile(string filepath) {
                 normal.y = mesh->mNormals[j].y;
                 normal.z = mesh->mNormals[j].z;
                 normals.push_back(normal);
+            }
+            
+            if(mesh->mTextureCoords[0]) {
+                hasTextureCoordinates = true;
+                vec2 texture;
+                texture.x = mesh->mTextureCoords[0][j].x; 
+                texture.y = mesh->mTextureCoords[0][j].y;
+                textureCoords.push_back(texture);
             }
 
             // bounding box calculations

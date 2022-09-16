@@ -17,6 +17,8 @@ using glm::mat4;
 #define OPENGL_SHADER_LOCATION "../src/openGL/shaders/"
 #define CLOSE2GL_SHADER_LOCATION "../src/close2GL/shaders/"
 
+#define TEXTURE_LOCATION "../data/texture.jpg"
+
 enum RenderingPrimitive { 
     POINTS_PRIMITIVE    = 0, 
     LINES_PRIMITIVE     = 1, 
@@ -26,9 +28,15 @@ enum RenderingAPI {
     OpenGL_API  = 0, 
     Close2GL_API= 1 
 };
+enum TextureFiltering {
+    NEAREST_NEIGHBOUR = 0,
+    BILINEAR = 1,
+    TRILINEAR = 2
+};
 
 // Default setting values
 #define DEFAULT_RENDERING_PRIMITIVE         RenderingPrimitive::TRIANGLES_PRIMITIVE
+#define DEFAULT_TEXTURE_FILTERING           TextureFiltering::NEAREST_NEIGHBOUR
 #define DEFAULT_RENDERING_COLOR             vec3(0.340f, 0.514f, 0.877f)
 #define DEFAULT_FIELD_OF_VIEW               45
 #define DEFAULT_NEAR_PLANE                  0.01f
@@ -56,10 +64,14 @@ public:
     static float farPlane;
     static bool cullingEnabled;
     static int reverseFaceOrientation;
+    static bool shouldUseTexture;
+    static TextureFiltering textureFiltering;
 
 private:
     unsigned int openGLProgram;
     unsigned int close2GLProgram;
+    
+    unsigned int texture;
 
     unsigned int openGLVAO;
     unsigned int openGLEBO;
@@ -74,12 +86,14 @@ private:
     int openGLProjectionUniform;
     int openGLColorUniform;
     int openGLCameraPositionUniform;
+    int openGLUseTextureUniform;
     int openGLShadingSubroutine;
 
     int close2GLColorUniform;
 
     unsigned int createOpenGLShaderProgram();
     unsigned int createOpenGLVAO();
+    void loadTexture();
     void initializeOpenGLShadingSubroutines();
     void initializeOpenGL();
     mat4 openGLProjectionMatrix();

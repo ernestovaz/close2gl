@@ -210,8 +210,9 @@ void Rasterizer::calculateIncreasingLine(vec3 start, vec3 end) {
 void Rasterizer::fillTriangle(vec3 color) {
     for (int i = 0; i < minValues.size(); i++) {
         int y = i + minHeight;
-        for (int x = minValues[i]; x <= maxValues[i]; x++)
+        for (int x = minValues[i]; x <= maxValues[i]; x++){
             colorBuffer.setColor(x, y, color);
+        }
     }
 }
 

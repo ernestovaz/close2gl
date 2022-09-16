@@ -11,6 +11,10 @@
 
 #include "../application/Window.h"
 #include "../close2GL/Close2GL.h"
+#include "../close2GL/Close2GLClass.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 using std::cerr;
 using std::exit;
@@ -38,6 +42,8 @@ int Renderer::reverseFaceOrientation            = DEFAULT_FACE_ORIENTATION_REVER
 bool Renderer::cullingEnabled                   = DEFAULT_CULLING;
 vec3 Renderer::renderingColor                   = DEFAULT_RENDERING_COLOR;
 RenderingPrimitive Renderer::renderingPrimitive = DEFAULT_RENDERING_PRIMITIVE;
+bool Renderer::shouldUseTexture                 = false;
+TextureFiltering Renderer::textureFiltering     = DEFAULT_TEXTURE_FILTERING;
 
 Renderer::Renderer() {
     if(!gladLoadGLLoader((GLADloadproc) Window::getProcessAddress())) {
@@ -50,6 +56,7 @@ Renderer::Renderer() {
 
     initializeOpenGL();
     initializeClose2GL();
+    loadTexture();
 }
 
 void Renderer::initializeOpenGL() {
@@ -60,6 +67,7 @@ void Renderer::initializeOpenGL() {
     openGLProjectionUniform =   glGetUniformLocation(openGLProgram, "projection");
     openGLColorUniform =        glGetUniformLocation(openGLProgram, "color");
     openGLCameraPositionUniform=glGetUniformLocation(openGLProgram, "camera_position");
+    openGLUseTextureUniform=    glGetUniformLocation(openGLProgram, "use_texture");
 
     openGLVAO = createOpenGLVAO(); 
 
@@ -117,9 +125,24 @@ void Renderer::initializeClose2GL() {
     glBindVertexArray(0);
 }
 
+void Renderer::loadTexture() {
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, channels;
+    unsigned char* data = stbi_load(TEXTURE_LOCATION, &width, &height, &channels, 0);
+    if(data != NULL) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        cerr << "ERROR LOADING TEXTURE: " << stbi_failure_reason() << endl;
+        exit(EXIT_FAILURE);
+    }
+    stbi_image_free(data);
+}
+
 void Renderer::close2GLResize() {
-    colorBuffer.resize(Window::width, Window::height); 
-    depthBuffer.resize(Window::width, Window::height);
+    Close2GLClass::updateViewport(0, 0, Window::width, Window::height);
     glDeleteTextures(1, &close2GLTexture);
     glGenTextures(1, &close2GLTexture);
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
@@ -127,7 +150,7 @@ void Renderer::close2GLResize() {
 }
 
 unsigned int Renderer::createOpenGLVAO() {
-    unsigned int vertexArrayID, positionBufferID, normalBufferID;
+    unsigned int vertexArrayID, positionBufferID, normalBufferID, textureCoordBufferID;
 
     // set up VAO
     glGenVertexArrays(1, &vertexArrayID);
@@ -168,6 +191,20 @@ unsigned int Renderer::createOpenGLVAO() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1,3,GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
 
+    // texture coords
+    if(Model::hasTextureCoordinates) {
+        glGenBuffers(1, &textureCoordBufferID);
+        glBindBuffer(GL_ARRAY_BUFFER, textureCoordBufferID);
+        glBufferData(
+                GL_ARRAY_BUFFER, 
+                Model::textureCoords.size() * sizeof(vec2), 
+                Model::textureCoords.data(), 
+                GL_STATIC_DRAW
+        );
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2,2,GL_FLOAT, GL_FALSE, sizeof(vec2), 0);
+    }
+
     glBindVertexArray(0);
 
     return vertexArrayID;
@@ -202,6 +239,23 @@ void Renderer::openGLRender() {
             break;
 
     }
+    if(shouldUseTexture) {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        switch(textureFiltering){
+            case NEAREST_NEIGHBOUR:
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                break;
+            case BILINEAR:
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                break;
+            case TRILINEAR:
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                break;
+        }
+    }
 
     glUseProgram(openGLProgram);
     setShadingMethod(ShadingMethod::methods.at(currentShadingMethod)); 
@@ -216,6 +270,7 @@ void Renderer::openGLRender() {
     glUniformMatrix4fv(openGLProjectionUniform,1,GL_FALSE, value_ptr(projection));
     glUniform3fv(openGLColorUniform, 1, value_ptr(Renderer::renderingColor));
     glUniform3fv(openGLCameraPositionUniform, 1, value_ptr(Camera::position));
+    glUniform1i(openGLUseTextureUniform, shouldUseTexture);
 
     if(Renderer::cullingEnabled) glEnable(GL_CULL_FACE);
     else glDisable(GL_CULL_FACE);
@@ -231,57 +286,32 @@ void Renderer::openGLRender() {
 
 void Renderer::close2GLRender() {
     glUseProgram(close2GLProgram);
-    glDisable(GL_CULL_FACE); // culling should be done in Close2GL
+    glDisable(GL_CULL_FACE); //culling should be done in Close2GL
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    float FOVy = radians(Renderer::verticalFieldOfView);
-    float FOVx;
-
+    Close2GLClass::verticalFOV = radians(Renderer::verticalFieldOfView);
     if (!Renderer::fieldOfViewIsAsymmetric) {
         //manually calculate horizontal field of view for simmetry
-        FOVx = Close2GL::horizontalFieldOfView(FOVy, Window::width, Window::height);
-        Renderer::horizontalFieldOfView = degrees(FOVx);
-    } else FOVx = radians(Renderer::horizontalFieldOfView);
+        Close2GLClass::horizontalFOV = Close2GLClass::calculateHorizontalFOV();
+        Renderer::horizontalFieldOfView = degrees(Close2GLClass::horizontalFOV);
+    } else Close2GLClass::horizontalFOV = radians(Renderer::horizontalFieldOfView);
 
-    mat4 view  = Close2GL::viewMatrix(
-        Camera::position,
-        Camera::direction,
-        Camera::up
-    );
-    mat4 projection = Close2GL::projectionMatrix(
-        FOVx, FOVy, 
-        Renderer::nearPlane,
-        Renderer::farPlane
-    );
-    mat4 viewport = Close2GL::viewportMatrix(
-        0, 0, 
-        Window::width, Window::height
-    );
+    Close2GLClass::shading = static_cast<Close2GLClass::Shading>(Renderer::currentShadingMethod);
+    Close2GLClass::primitive = static_cast<Close2GLClass::Primitive>(Renderer::renderingPrimitive);
+    Close2GLClass::color = renderingColor;
 
-    vector<vec3> cameraPositions = Close2GL::transform(Model::positions, view);
+    Close2GLClass::cameraPosition = Camera::position;
+    Close2GLClass::cameraDirection = Camera::direction;
+    Close2GLClass::cameraUp = Camera::up;
+    Close2GLClass::near = nearPlane;
+    Close2GLClass::far = farPlane;
 
-    vector<float> wValues;
-    vector<vec3> positions = Close2GL::transformAndPerspectiveDivide(cameraPositions, projection, wValues);
-
-    vector<unsigned int> indices = Close2GL::viewFrustumCulling(Model::indices, positions);
-    positions = Close2GL::transform(positions, viewport);
-    
-    if (Renderer::cullingEnabled) {
-        indices = Close2GL::backfaceCulling(indices, positions, Renderer::reverseFaceOrientation);
-    }
-    
-    colorBuffer.clear(BACKGROUND_COLOR * 255.0f);
-    depthBuffer.clear();
-    if(currentShadingMethod == 0) {
-        Close2GL::rasterize(colorBuffer, renderingColor, indices, positions, (int)renderingPrimitive);
-    } else {
-        vector<vec3> normals = Model::normals;
-        Close2GL::Shader shader(Camera::position + vec3(2.0, 2.0, 2.0), Camera::position, renderingColor);
-        Close2GL::rasterize(colorBuffer, depthBuffer, indices, positions, Model::positions, normals, wValues, (int)renderingPrimitive, shader);
-    }
+    Close2GLClass::clear(BACKGROUND_COLOR * 255.0f);
+    Close2GLClass::draw(Model::indices, Model::positions, Model::normals, Model::textureCoords);
 
     glBindTexture(GL_TEXTURE_2D, close2GLTexture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Window::width, Window::height, GL_RGB, GL_UNSIGNED_BYTE, colorBuffer.data());
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Window::width, Window::height, 
+        GL_RGB, GL_UNSIGNED_BYTE, Close2GLClass::getRenderedData());
 
     glBindVertexArray(close2GLVAO);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
