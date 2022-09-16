@@ -25,6 +25,11 @@ public:
     static Shading shading;
     static Orientation frontFace;
     static vec3 color;
+
+    static unsigned char* texture;
+    static int textureWidth;
+    static int textureHeight;
+
     static bool useTexture;
     static bool useHorizontalFOV;
     static bool performBackfaceCulling;

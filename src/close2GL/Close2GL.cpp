@@ -6,6 +6,8 @@
 
 #include "shaders/Shader.h"
 
+#include "texture/TextureSamplerNearest.h"
+
 #include <iostream>
 #include <glm/vec4.hpp>
 
@@ -30,6 +32,10 @@ float Close2GL::verticalFOV = 60;
 float Close2GL::horizontalFOV = 60;
 float Close2GL::near = 0.01;
 float Close2GL::far = 10;
+
+unsigned char* Close2GL::texture;
+int Close2GL::textureWidth;
+int Close2GL::textureHeight;
 
 ColorBuffer Close2GL::colorBuffer; 
 DepthBuffer Close2GL::depthBuffer; 
@@ -107,7 +113,9 @@ void Close2GL::draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> nor
 }
 
 void Close2GL::drawNoShading(vector<unsigned int> ids, vector<vec3> pos, vector<vec2> uvs, Rasterizer* rasterizer) {
+    TextureSamplerNearest sampler(texture, textureWidth, textureHeight);
     for(int i=0; i+2 < ids.size(); i+=3) {
+        vec3 color = sampler.getColor(uvs[ids[i]]);
         vector<vec3> vertices = {
             pos[ids[i]],
             pos[ids[i+1]],

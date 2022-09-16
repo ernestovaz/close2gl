@@ -46,6 +46,7 @@ enum TextureFiltering {
 class Renderer {
 public:
     Renderer();
+    ~Renderer();
     void render();
 
     static int currentShadingMethod;

@@ -58,6 +58,10 @@ Renderer::Renderer() {
     loadTexture();
 }
 
+Renderer::~Renderer() {
+    if (Close2GL::texture != NULL) delete [] Close2GL::texture;
+}
+
 void Renderer::initializeOpenGL() {
     openGLProgram = createOpenGLShaderProgram();
 
@@ -137,7 +141,9 @@ void Renderer::loadTexture() {
         cerr << "ERROR LOADING TEXTURE: " << stbi_failure_reason() << endl;
         exit(EXIT_FAILURE);
     }
-    stbi_image_free(data);
+    Close2GL::texture = data;
+    Close2GL::textureWidth = width;
+    Close2GL::textureHeight = height;
 }
 
 void Renderer::close2GLResize() {
