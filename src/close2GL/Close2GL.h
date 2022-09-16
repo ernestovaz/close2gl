@@ -66,5 +66,5 @@ private:
     static void updateView();
     static void updateProjection();
     static void drawNoShading(vector<unsigned int> ids, vector<vec3> pos, vector<vec2> uvs, Rasterizer* rasterizer);
-    static void drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> norms, vector<vec2> uvs, Rasterizer* rasterizer);
+    static void drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> worldPos, vector<vec3> norms, vector<vec2> uvs, Rasterizer* rasterizer);
 };

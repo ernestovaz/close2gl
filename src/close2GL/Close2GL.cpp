@@ -100,7 +100,7 @@ void Close2GL::draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> nor
             drawNoShading(culledIndices, screenPositions, uvs, rasterizer);
             break;
         case GOURAUD:
-            drawGouraud(culledIndices, screenPositions, norms, uvs, rasterizer);
+            drawGouraud(culledIndices, screenPositions, pos, norms, uvs, rasterizer);
             break;
     }
     delete rasterizer;
@@ -117,7 +117,7 @@ void Close2GL::drawNoShading(vector<unsigned int> ids, vector<vec3> pos, vector<
     }
 }
 
-void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> norms, vector<vec2> uvs, Rasterizer* rasterizer){
+void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> worldPos, vector<vec3> norms, vector<vec2> uvs, Rasterizer* rasterizer){
     Shader shader(cameraPosition + vec3(2.0, 2.0, 2.0), cameraPosition, color);
     for(int i=0; i+2 < ids.size(); i+=3) {
         vector<vec4> vertices = {
@@ -126,9 +126,9 @@ void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<ve
             vec4(pos[ids[i+2]], WValues.at(ids[i+2]))
         };
         vector<vec3> colors = {
-            shader.applyPhongLightingModel(pos[ids[i  ]], norms[ids[i  ]]),
-            shader.applyPhongLightingModel(pos[ids[i+1]], norms[ids[i+1]]),
-            shader.applyPhongLightingModel(pos[ids[i+2]], norms[ids[i+2]])
+            shader.applyPhongLightingModel(worldPos[ids[i  ]], norms[ids[i  ]]),
+            shader.applyPhongLightingModel(worldPos[ids[i+1]], norms[ids[i+1]]),
+            shader.applyPhongLightingModel(worldPos[ids[i+2]], norms[ids[i+2]])
         };
         rasterizer->rasterize(vertices, colors);
     }
