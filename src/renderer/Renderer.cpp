@@ -144,6 +144,7 @@ void Renderer::loadTexture() {
     Close2GL::texture = data;
     Close2GL::textureWidth = width;
     Close2GL::textureHeight = height;
+    Close2GL::generateMipmap();
 }
 
 void Renderer::close2GLResize() {

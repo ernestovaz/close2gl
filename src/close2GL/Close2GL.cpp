@@ -9,6 +9,7 @@
 #include "texture/TextureSampler.h"
 #include "texture/TextureSamplerNearest.h"
 #include "texture/TextureSamplerBilinear.h"
+#include "texture/TextureSamplerTrilinear.h"
 
 #include <iostream>
 #include <glm/vec4.hpp>
@@ -42,6 +43,7 @@ int Close2GL::textureHeight;
 
 ColorBuffer Close2GL::colorBuffer; 
 DepthBuffer Close2GL::depthBuffer; 
+vector<MipmapLevel> Close2GL::mipmap;
 
 mat4 Close2GL::model; 
 mat4 Close2GL::view; 
@@ -98,6 +100,9 @@ void Close2GL::draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> nor
             break;
         case BILINEAR:
             sampler = new TextureSamplerBilinear(texture, textureWidth, textureHeight);
+            break;
+        case TRILINEAR:
+            sampler = new TextureSamplerTrilinear(mipmap, textureWidth, textureHeight);
             break;
     }
 
@@ -275,6 +280,10 @@ vector<unsigned int> Close2GL::backfaceCull(vector<unsigned int> ids, vector<vec
 
 float Close2GL::calculateHorizontalFOV(){
     return 2.0f * atan(tan(verticalFOV/2.0f)/height*width);
+}
+
+void Close2GL::generateMipmap(){
+    mipmap = TextureSampler::generateMipmap(texture, textureWidth, textureHeight);
 }
 
 void Close2GL::updateView(){

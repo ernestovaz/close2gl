@@ -35,14 +35,6 @@ vec3 TextureSamplerBilinear::getColor(vec2 uv){
     d2 = fabs(t2.x - x);
     color12 = linearInterpolate(c1, c2, d1, d2);
 
-    /*
-    cout << "c1:" << c1.x << "r " << c1.y << "g " << c1.z << "b" << endl;
-    cout << "d1:" << d1 << endl;
-    cout << "c2:" << c2.x << "r " << c2.y << "g " << c2.z << "b" << endl;
-    cout << "d2:" << d2 << endl;
-    cout << "re:" << color12.x << "r " << color12.y << "g " << color12.z << "b" << endl;
-    */
-
     d3 = fabs(t3.x - x);
     d4 = fabs(t4.x - x);
     color34 = linearInterpolate(c3, c4, d3, d4);

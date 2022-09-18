@@ -5,9 +5,10 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
-#include "rasterization/Rasterizer.h"
 #include "buffer/ColorBuffer.h"
 #include "buffer/DepthBuffer.h"
+#include "texture/MipmapLevel.h"
+#include "rasterization/Rasterizer.h"
 
 using std::vector;
 using glm::vec2;
@@ -48,6 +49,7 @@ public:
     static float far;
 
     static float calculateHorizontalFOV();
+    static void generateMipmap();
     static void clear(vec3 color);
     static void updateViewport(int left, int top, int right, int bottom);
     static void draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> norms, vector<vec2> uvs);
@@ -56,6 +58,7 @@ public:
 private:
     static ColorBuffer colorBuffer;
     static DepthBuffer depthBuffer;
+    static vector<MipmapLevel> mipmap;
     
     static mat4 model;
     static mat4 view;
