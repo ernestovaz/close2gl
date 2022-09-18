@@ -1,17 +1,22 @@
 #include "TextureSampler.h"
 
-
 TextureSampler::TextureSampler(unsigned char* data, int width, int height) {
     this->data = data;
     this->width = width;
     this->height = height;
 }
 
-vec3 TextureSampler::getTexelColor(int x, int y) {
-    if(x > width || x < 0 || y > height || y < 0) return vec3(0.0f);
+vec3 TextureSampler::getTexelColor(vec2 coordinate) {
+    if(coordinate.x >= width || coordinate.x < 0 || coordinate.y >= height || coordinate.y < 0) 
+        return vec3(0.0f);
+
     vec3 color;
-    color.x = data[(height * x + y) * 3];
-    color.y = data[(height * x + y) * 3 + 1];
-    color.z = data[(height * x + y) * 3 + 2];
+    color.x = data[(height * (int)coordinate.x + (int)coordinate.y) * 3];
+    color.y = data[(height * (int)coordinate.x + (int)coordinate.y) * 3 + 1];
+    color.z = data[(height * (int)coordinate.x + (int)coordinate.y) * 3 + 2];
     return color;
+}
+
+vec3 TextureSampler::linearInterpolate(vec3 c1, vec3 c2, float d1, float d2){
+    return (c1 * d2 + c2 * d1) / (d1 + d2);
 }

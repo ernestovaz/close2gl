@@ -19,11 +19,13 @@ public:
     enum Primitive{POINTS, LINES, TRIANGLES};
     enum Shading{NO_SHADING, GOURAUD};
     enum Orientation{CW, CCW};
+    enum TextureFilter{NEAREST, BILINEAR, TRILINEAR};
 
     //options
     static Primitive primitive;
     static Shading shading;
     static Orientation frontFace;
+    static TextureFilter filter;
     static vec3 color;
 
     static unsigned char* texture;

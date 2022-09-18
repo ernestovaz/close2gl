@@ -15,7 +15,7 @@ using glm::mat4;
 #define OPENGL_SHADER_LOCATION "../src/openGL/shaders/"
 #define CLOSE2GL_SHADER_LOCATION "../src/close2GL/shaders/"
 
-#define TEXTURE_LOCATION "../data/checker.jpg"
+#define TEXTURE_LOCATION "../data/cheese.jpg"
 
 enum RenderingPrimitive { 
     POINTS_PRIMITIVE    = 0, 

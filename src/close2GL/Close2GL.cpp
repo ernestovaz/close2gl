@@ -6,7 +6,9 @@
 
 #include "shaders/Shader.h"
 
+#include "texture/TextureSampler.h"
 #include "texture/TextureSamplerNearest.h"
+#include "texture/TextureSamplerBilinear.h"
 
 #include <iostream>
 #include <glm/vec4.hpp>
@@ -18,6 +20,7 @@ using glm::vec4;
 Close2GL::Primitive Close2GL::primitive = TRIANGLES;
 Close2GL::Shading Close2GL::shading = NO_SHADING;
 Close2GL::Orientation Close2GL::frontFace = CCW;
+Close2GL::TextureFilter Close2GL::filter = NEAREST;
 
 vec3 Close2GL::color = vec3(0.0f, 0.0f, 0.0f);
 bool Close2GL::useTexture = false;
@@ -87,10 +90,18 @@ void Close2GL::draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> nor
     if(performBackfaceCulling){
         culledIndices = backfaceCull(culledIndices, screenPositions);
     }
-    
-    int count = culledIndices.size();
+
+    TextureSampler* sampler = NULL;
+    switch(filter){
+        case NEAREST:
+            sampler = new TextureSamplerNearest(texture, textureWidth, textureHeight);
+            break;
+        case BILINEAR:
+            sampler = new TextureSamplerBilinear(texture, textureWidth, textureHeight);
+            break;
+    }
+
     Rasterizer* rasterizer = NULL;
-    TextureSampler* sampler = new TextureSamplerNearest(texture, textureWidth, textureHeight);
     switch(primitive){
         case POINTS:
             rasterizer = new RasterizerPoint(colorBuffer, depthBuffer, sampler);
@@ -102,6 +113,7 @@ void Close2GL::draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> nor
             rasterizer = new RasterizerTriangle(colorBuffer, depthBuffer, sampler);
             break;
     }
+
     switch (shading){
         case NO_SHADING:
             if(useTexture)

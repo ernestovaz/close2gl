@@ -303,6 +303,7 @@ void Renderer::close2GLRender() {
 
     Close2GL::shading = static_cast<Close2GL::Shading>(Renderer::currentShadingMethod);
     Close2GL::primitive = static_cast<Close2GL::Primitive>(Renderer::renderingPrimitive);
+    Close2GL::filter = static_cast<Close2GL::TextureFilter>(Renderer::textureFiltering);
     Close2GL::color = renderingColor * 255.0f;
 
     Close2GL::useTexture = Renderer::shouldUseTexture;
