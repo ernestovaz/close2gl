@@ -305,6 +305,9 @@ void Renderer::close2GLRender() {
     Close2GL::primitive = static_cast<Close2GL::Primitive>(Renderer::renderingPrimitive);
     Close2GL::color = renderingColor * 255.0f;
 
+    Close2GL::useTexture = Renderer::shouldUseTexture;
+    Close2GL::performBackfaceCulling= Renderer::cullingEnabled;
+
     Close2GL::cameraPosition = Camera::position;
     Close2GL::cameraDirection = Camera::direction;
     Close2GL::cameraUp = Camera::up;

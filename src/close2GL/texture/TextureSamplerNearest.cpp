@@ -1,5 +1,6 @@
 #include "TextureSamplerNearest.h"
 
+
 TextureSamplerNearest::TextureSamplerNearest(unsigned char* data, int width, int height)
 : TextureSampler(data, width, height) {}
 

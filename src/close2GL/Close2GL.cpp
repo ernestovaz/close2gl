@@ -90,42 +90,63 @@ void Close2GL::draw(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> nor
     
     int count = culledIndices.size();
     Rasterizer* rasterizer = NULL;
+    TextureSampler* sampler = new TextureSamplerNearest(texture, textureWidth, textureHeight);
     switch(primitive){
         case POINTS:
-            rasterizer = new RasterizerPoint(colorBuffer, depthBuffer);
+            rasterizer = new RasterizerPoint(colorBuffer, depthBuffer, sampler);
             break;
         case LINES:
-            rasterizer = new RasterizerLine(colorBuffer, depthBuffer);
+            rasterizer = new RasterizerLine(colorBuffer, depthBuffer, sampler);
             break;
         case TRIANGLES:
-            rasterizer = new RasterizerTriangle(colorBuffer, depthBuffer);
+            rasterizer = new RasterizerTriangle(colorBuffer, depthBuffer, sampler);
             break;
     }
     switch (shading){
         case NO_SHADING:
-            drawNoShading(culledIndices, screenPositions, uvs, rasterizer);
+            if(useTexture)
+                drawNoShading(culledIndices, screenPositions, uvs, rasterizer);
+            else 
+                drawNoShading(culledIndices, screenPositions, rasterizer);
             break;
         case GOURAUD:
-            drawGouraud(culledIndices, screenPositions, pos, norms, uvs, rasterizer);
+            if(useTexture)
+                drawGouraud(culledIndices, screenPositions, pos, norms, uvs, rasterizer);
+            else 
+                drawGouraud(culledIndices, screenPositions, pos, norms, rasterizer);
             break;
     }
+    delete sampler;
     delete rasterizer;
 }
 
-void Close2GL::drawNoShading(vector<unsigned int> ids, vector<vec3> pos, vector<vec2> uvs, Rasterizer* rasterizer) {
-    TextureSamplerNearest sampler(texture, textureWidth, textureHeight);
+void Close2GL::drawNoShading(vector<unsigned int> ids, vector<vec3> pos, Rasterizer* rasterizer) {
     for(int i=0; i+2 < ids.size(); i+=3) {
-        vec3 color = sampler.getColor(uvs[ids[i]]);
-        vector<vec3> vertices = {
-            pos[ids[i]],
-            pos[ids[i+1]],
-            pos[ids[i+2]]
+        vector<vec4> vertices = {
+            vec4(pos[ids[i  ]], WValues.at(ids[i  ])),
+            vec4(pos[ids[i+1]], WValues.at(ids[i+1])),
+            vec4(pos[ids[i+2]], WValues.at(ids[i+2]))
         };
         rasterizer->rasterize(vertices, color);
     }
 }
+void Close2GL::drawNoShading(vector<unsigned int> ids, vector<vec3> pos, vector<vec2> uvs, Rasterizer* rasterizer) {
+    for(int i=0; i+2 < ids.size(); i+=3) {
+        vector<vec4> vertices = {
+            vec4(pos[ids[i  ]], WValues.at(ids[i  ])),
+            vec4(pos[ids[i+1]], WValues.at(ids[i+1])),
+            vec4(pos[ids[i+2]], WValues.at(ids[i+2]))
+        };
+        vector<vec2> texels = {
+            uvs[ids[i  ]],
+            uvs[ids[i+1]],
+            uvs[ids[i+2]],
+        };
+        rasterizer->rasterize(vertices, texels, color);
+    }
+}
 
-void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> worldPos, vector<vec3> norms, vector<vec2> uvs, Rasterizer* rasterizer){
+void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> worldPos, vector<vec3> norms, Rasterizer* rasterizer){
     Shader shader(cameraPosition + vec3(2.0, 2.0, 2.0), cameraPosition, color);
     for(int i=0; i+2 < ids.size(); i+=3) {
         vector<vec4> vertices = {
@@ -139,6 +160,28 @@ void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<ve
             shader.applyPhongLightingModel(worldPos[ids[i+2]], norms[ids[i+2]])
         };
         rasterizer->rasterize(vertices, colors);
+    }
+}
+
+void Close2GL::drawGouraud(vector<unsigned int> ids, vector<vec3> pos, vector<vec3> worldPos, vector<vec3> norms, vector<vec2> uvs, Rasterizer* rasterizer){
+    Shader shader(cameraPosition + vec3(2.0, 2.0, 2.0), cameraPosition, vec3(255.0f));
+    for(int i=0; i+2 < ids.size(); i+=3) {
+        vector<vec4> vertices = {
+            vec4(pos[ids[i  ]], WValues.at(ids[i  ])),
+            vec4(pos[ids[i+1]], WValues.at(ids[i+1])),
+            vec4(pos[ids[i+2]], WValues.at(ids[i+2]))
+        };
+        vector<vec3> colors = {
+            shader.applyPhongLightingModel(worldPos[ids[i  ]], norms[ids[i  ]]),
+            shader.applyPhongLightingModel(worldPos[ids[i+1]], norms[ids[i+1]]),
+            shader.applyPhongLightingModel(worldPos[ids[i+2]], norms[ids[i+2]])
+        };
+        vector<vec2> texels = {
+            uvs[ids[i  ]],
+            uvs[ids[i+1]],
+            uvs[ids[i+2]],
+        };
+        rasterizer->rasterize(vertices, texels, colors);
     }
 }
 
