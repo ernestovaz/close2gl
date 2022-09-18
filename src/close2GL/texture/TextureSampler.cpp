@@ -11,9 +11,9 @@ vec3 TextureSampler::getTexelColor(vec2 coordinate) {
         return vec3(0.0f);
 
     vec3 color;
-    color.x = data[(height * (int)coordinate.x + (int)coordinate.y) * 3];
-    color.y = data[(height * (int)coordinate.x + (int)coordinate.y) * 3 + 1];
-    color.z = data[(height * (int)coordinate.x + (int)coordinate.y) * 3 + 2];
+    color.x = data[(width * (int)coordinate.y + (int)coordinate.x) * 3];
+    color.y = data[(width * (int)coordinate.y + (int)coordinate.x) * 3 + 1];
+    color.z = data[(width * (int)coordinate.y + (int)coordinate.x) * 3 + 2];
     return color;
 }
 
