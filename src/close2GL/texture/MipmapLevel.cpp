@@ -8,8 +8,8 @@ MipmapLevel::MipmapLevel(int width, int height)
 
 MipmapLevel::MipmapLevel(unsigned char* texture, int width, int height)
 : MipmapLevel(width, height) {
-    for(int x = 0; x < image.size(); x++) {
-        for(int y = 0; y < image[x].size(); y++) {
+    for(int x = 0; x < width; x++) {
+        for(int y = 0; y < height; y++) {
             vec3 textureColor = colorFromTexture(texture, width, height, x, y);
             image[x][y] = textureColor;
         }
@@ -17,7 +17,7 @@ MipmapLevel::MipmapLevel(unsigned char* texture, int width, int height)
 }
 
 vec3 MipmapLevel::at(int x, int y) {
-    return image[x][y];
+    return image.at(x).at(y);
 }
 
 void MipmapLevel::set(int x, int y, vec3 color) {

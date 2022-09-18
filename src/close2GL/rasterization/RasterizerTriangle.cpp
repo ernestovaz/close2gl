@@ -486,6 +486,7 @@ void RasterizerTriangle::fillTriangleUsingTexture(vec3 color){
 
         for (int x = minValues[i]; x <= maxValues[i]; x++){
             if(depthBuffer.update(x, y, -uv.z)){
+                sampler->setScanlineIncrement(uvStep/uv.z);
                 colorBuffer.setColor(x, y, sampler->getColor(uv/uv.z));
             }
             uv += uvStep;
@@ -505,6 +506,7 @@ void RasterizerTriangle::fillTriangleUsingTexture(){
         vec3 uvStep = calculateUVInterpolationStep(minUVs[i], maxUVs[i], distance);
         for (int x = minValues[i]; x <= maxValues[i]; x++) {
             if(depthBuffer.update(x, y, -color.w)){
+                sampler->setScanlineIncrement(uvStep/uv.z);
                 vec3 shaded = vec3(color/color.w) * sampler->getColor(uv/uv.z) / 255.0f;
                 colorBuffer.setColor(x, y, shaded);
             }

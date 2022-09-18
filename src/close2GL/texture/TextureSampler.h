@@ -15,6 +15,7 @@ public:
     TextureSampler(int width, int height);
     TextureSampler(unsigned char* data, int width, int height);
     virtual vec3 getColor(vec2 uv){ return vec3(0.0f); }
+    virtual void setScanlineIncrement(vec2 increment) {}
 
     static vector<MipmapLevel> generateMipmap(unsigned char* data, int width, int height);
 

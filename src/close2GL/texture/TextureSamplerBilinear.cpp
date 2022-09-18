@@ -1,9 +1,5 @@
 #include "TextureSamplerBilinear.h"
-
 #include <cmath>
-
-#include <iostream>
-using namespace std;
 
 TextureSamplerBilinear::TextureSamplerBilinear(unsigned char* data, int width, int height)
 : TextureSampler(data, width, height) {}
