@@ -2,9 +2,12 @@
 
 #include <cstdlib>
 #include <climits>
+#include <algorithm>
 
 #include <iostream>
 using namespace std;
+
+using std::sort;
 
 RasterizerTriangle::RasterizerTriangle(ColorBuffer& colorBuffer, DepthBuffer& depthBuffer)
 : Rasterizer(colorBuffer, depthBuffer) {}
@@ -13,36 +16,138 @@ RasterizerTriangle::RasterizerTriangle(ColorBuffer& colorBuffer, DepthBuffer& de
 : Rasterizer(colorBuffer, depthBuffer, sampler) {}
 
 void RasterizerTriangle::rasterize(vector<vec4> vertices, vec3 color){
+    /*
     initializeArrays(vertices);
     fillArrays(vertices[0], vertices[1]);
     fillArrays(vertices[1], vertices[2]);
     fillArrays(vertices[2], vertices[0]);
     fillTriangle(color);
+    */
+    vector<vec2> uvs = {vec2(0.0f), vec2(0.0f), vec2(0.0f)};
+    vector<vec3> colors = {color, color, color};
+    newRasterize(vertices, uvs, colors);
 }
 
 void RasterizerTriangle::rasterize(vector<vec4> vertices, vector<vec3> colors){
+    /*
     initializeArrays(vertices);
     fillArrays(vertices[0], vertices[1], colors[0], colors[1]);
     fillArrays(vertices[1], vertices[2], colors[1], colors[2]);
     fillArrays(vertices[2], vertices[0], colors[2], colors[0]);
     fillTriangle();
+    */
+    vector<vec2> uvs = {vec2(0.0f), vec2(0.0f), vec2(0.0f)};
+    newRasterize(vertices, uvs, colors);
 }
 
 void RasterizerTriangle::rasterize(vector<vec4> pos, vector<vec2> uvs, vec3 color) {
+    /*
     initializeArrays(pos);
     fillArrays(pos[0], pos[1], uvs[0], uvs[1]);
     fillArrays(pos[1], pos[2], uvs[1], uvs[2]);
     fillArrays(pos[2], pos[0], uvs[2], uvs[0]);
     fillTriangleUsingTexture(color);
+    */
+    vector<vec3> colors = {color, color, color};
+    newRasterize(pos, uvs, colors);
 }
 
 void RasterizerTriangle::rasterize(vector<vec4> pos, vector<vec2> uvs, vector<vec3> colors) {
+    /*
     initializeArrays(pos);
     fillArrays(pos[0], pos[1], uvs[0], uvs[1], colors[0], colors[1]);
     fillArrays(pos[1], pos[2], uvs[1], uvs[2], colors[1], colors[2]);
     fillArrays(pos[2], pos[0], uvs[2], uvs[0], colors[2], colors[0]);
     fillTriangleUsingTexture();
+    */
+    newRasterize(pos, uvs, colors);
+}
+
+
+Vertex::Vertex(vec4 position, vec2 uv, vec3 color){
+    this->position = position;
+    this->uv = vec3(uv, 1.0f)/position.w;
+    this->color = vec4(color, 1.0f)/position.w;
+}
+
+
+TriangleEdge::TriangleEdge(Vertex top, Vertex bottom)
+: top(top), bottom(bottom) {
+    float distance = top.position.y - bottom.position.y;
+
+    x = top.position.x;
+    step = -(top.position.x - bottom.position.x)/distance;
     
+    uv = top.uv;
+    uvStep = -(top.uv - bottom.uv)/distance;
+    
+    color = top.color;
+    colorStep = -(top.color - bottom.color)/distance;
+}
+
+
+void RasterizerTriangle::newRasterize(vector<vec4> pos, vector<vec2> uvs, vector<vec3> colors) {
+    vector<Vertex> vertices;
+    for(int i = 0; i < 3; i++)
+        vertices.push_back(Vertex(pos[i], uvs[i], colors[i]));
+
+    sort(vertices.begin( ), vertices.end( ), [ ]( const Vertex& v1, const Vertex& v2 ){
+        return v1.position.y > v2.position.y;
+    });
+
+    TriangleEdge edge1(vertices[0], vertices[1]);
+    TriangleEdge edge2(vertices[0], vertices[2]);
+    vector<TriangleEdge> remaining = {TriangleEdge(vertices[1], vertices[2])};
+    vector<TriangleEdge> active = {edge1};
+    if(edge2.x + edge2.step < edge1.x + edge1.step) 
+        active.insert(active.begin(), edge2);
+    else 
+        active.push_back(edge2);
+
+    drawScanlines(active, remaining);   
+}
+
+
+void RasterizerTriangle::drawScanlines(vector<TriangleEdge> active, vector<TriangleEdge> remaining) {
+    vec4 color, colorStep;
+    vec3 uv, uvStep;
+    vec3 finalColor;
+
+    int y = active[0].top.position.y;
+    while(true) {
+
+        for(int i=0; i<2; i++){
+            if(y < active[i].bottom.position.y){
+                if(remaining.empty()) return;
+                active[i] = remaining[0];
+                remaining.pop_back();
+            }
+        }
+        int distance = active[0].x - active[1].x;
+
+        color = active[0].color;
+        uv = active[0].uv;
+        colorStep = calculateColorInterpolationStep(color, active[1].color, distance);
+        uvStep = calculateUVInterpolationStep(uv, active[1].uv, distance);
+
+        for(int x = active[0].x; x <= active[1].x; x++) {
+            if(depthBuffer.update(x, y, -color.w)){
+                sampler->setScanlineIncrement(uvStep/uv.z);
+                finalColor = vec3(color/color.w);
+                colorBuffer.setColor(x, y, finalColor);
+            }
+            color += colorStep;
+            uv += uvStep;
+        }
+
+        for(int i=0; i<2; i++){
+            active[i].x += active[i].step;
+            active[i].uv += active[i].uvStep;
+            active[i].color += active[i].colorStep;
+        }
+
+        y--;
+    }
 }
 
 void RasterizerTriangle::initializeArrays(vector<vec4> vertices) {

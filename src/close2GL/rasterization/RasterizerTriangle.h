@@ -1,6 +1,32 @@
 #pragma once
 #include "Rasterizer.h"
 
+class Vertex {
+public:
+    vec4 position;
+    vec3 uv;
+    vec4 color;
+
+    Vertex(vec4 position, vec2 uv, vec3 color);
+};
+
+class TriangleEdge {
+public:
+    Vertex top;
+    Vertex bottom;
+
+    float x;
+    float step;
+    
+    vec3 uv;
+    vec3 uvStep;
+    
+    vec4 color;
+    vec4 colorStep;
+
+    TriangleEdge(Vertex top, Vertex bottom);
+};
+
 class RasterizerTriangle : public Rasterizer {
 public:
     RasterizerTriangle(ColorBuffer& colorBuffer, DepthBuffer& depthBuffer);
@@ -9,8 +35,10 @@ public:
     void rasterize(vector<vec4> vertices, vector<vec3> colors) override;
     void rasterize(vector<vec4> pos, vector<vec2> uvs, vec3 color) override;
     void rasterize(vector<vec4> pos, vector<vec2> uvs, vector<vec3> colors) override;
+    void newRasterize(vector<vec4> pos, vector<vec2> uvs, vector<vec3> colors);
 
 private:
+    void drawScanlines(vector<TriangleEdge> active, vector<TriangleEdge> remaining);
     void initializeArrays(vector<vec4> vertices);
 
     void updateArrays(int x, int y);
