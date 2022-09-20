@@ -1,13 +1,17 @@
 #include "RasterizerTriangle.h"
 
+
 #include <cstdlib>
 #include <climits>
 #include <algorithm>
+
+#include <glm/glm.hpp>
 
 #include <iostream>
 using namespace std;
 
 using std::sort;
+using glm::mix;
 
 RasterizerTriangle::RasterizerTriangle(ColorBuffer& colorBuffer, DepthBuffer& depthBuffer)
 : Rasterizer(colorBuffer, depthBuffer) {}
@@ -123,21 +127,30 @@ void RasterizerTriangle::drawScanlines(vector<TriangleEdge> active, vector<Trian
                 remaining.pop_back();
             }
         }
-        int distance = active[0].x - active[1].x;
+        float distance = active[1].x - active[0].x;
 
+        /*
         color = active[0].color;
         uv = active[0].uv;
         colorStep = calculateColorInterpolationStep(color, active[1].color, distance);
         uvStep = calculateUVInterpolationStep(uv, active[1].uv, distance);
+        */
 
-        for(int x = active[0].x; x <= active[1].x; x++) {
+        for(float x = active[0].x; x <= active[1].x; x++) {
+            float t = (x-active[0].x)/distance;
+            color = mix(active[0].color, active[1].color, t);
+            uv = mix(active[0].uv, active[1].uv, t);
+            finalColor = vec3(color/color.w);
             if(depthBuffer.update(x, y, -color.w)){
                 sampler->setScanlineIncrement(uvStep/uv.z);
-                finalColor = vec3(color/color.w);
                 colorBuffer.setColor(x, y, finalColor);
             }
+            /*
             color += colorStep;
+            if(color.x > active[1].color.x || color.y > active[1].color.y || color.z > active[1].color.z || color.w > active[1].color.w){
+                color = active[1].color;
             uv += uvStep;
+            */
         }
 
         for(int i=0; i<2; i++){

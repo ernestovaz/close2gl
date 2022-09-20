@@ -39,6 +39,6 @@ protected:
     int minHeight;
     int maxHeight;
     
-    vec4 calculateColorInterpolationStep(vec4 start, vec4 end, int steps);
-    vec3 calculateUVInterpolationStep(vec3 start, vec3 end, int steps);
+    vec4 calculateColorInterpolationStep(vec4 start, vec4 end, float steps);
+    vec3 calculateUVInterpolationStep(vec3 start, vec3 end, float steps);
 };

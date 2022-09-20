@@ -2,9 +2,6 @@
 #include <cmath>
 #include <algorithm>
 
-#include <iostream>
-using namespace std;
-
 using std::clamp;
 using std::max;
 
