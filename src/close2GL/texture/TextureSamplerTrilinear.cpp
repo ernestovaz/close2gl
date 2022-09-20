@@ -23,9 +23,9 @@ vec3 TextureSamplerTrilinear::getColor(vec2 uv){
     vec3 cFloor, cCeiling, finalColor; //colors
     double level = calculateLevel(uv);
     
-    levelFloor = clamp((int)floor(level), 3, (int)mipmap.size()-1);
-    levelCeiling = clamp((int)ceil(level), 4, (int)mipmap.size()-1);
-    //cout << "level: " << level << "floor: " << levelFloor << "ceil" << levelCeiling << endl;
+    //cout << "level: " << level << endl;
+    levelFloor = clamp((int)floor(level), 0, (int)mipmap.size()-1);
+    levelCeiling = clamp((int)ceil(level), 0, (int)mipmap.size()-1);
     
     cFloor = interpolateLevel(levelFloor, uv);
     if(levelFloor == levelCeiling) return cFloor;
@@ -40,7 +40,9 @@ vec3 TextureSamplerTrilinear::getColor(vec2 uv){
 }
 
 double TextureSamplerTrilinear::calculateLevel(vec2 uv){
-    return log(max(increment.x*width, increment.y*height)) / log(2.0);
+    float biggest = max(abs(increment.x*width), abs(increment.y*height));
+    if(biggest == 0) return 0;
+    return abs(log2f(biggest));
 }
 
 vec3 TextureSamplerTrilinear::interpolateLevel(int level, vec2 uv) {
